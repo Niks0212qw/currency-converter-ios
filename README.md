@@ -32,7 +32,7 @@
 ## 📸 Скриншоты
 
 ### Главная страница
-![IMG_2025](https://github.com/user-attachments/assets/224c3e37-5018-4fb9-a6aa-9a7710271c0e)
+![IMG_2025](https://github.com/user-attachments/assets/13c031a9-508c-466e-b019-f808b5c728c8)
 
 ### Страница с выбором валют
 ![IMG_2026](https://github.com/user-attachments/assets/8c9edc2f-53d9-467d-ab72-656bd1046f3f)
