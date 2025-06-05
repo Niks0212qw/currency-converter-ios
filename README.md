@@ -32,13 +32,13 @@
 ## 📸 Скриншоты
 
 ### Главная страница
-![IMG_2025](https://github.com/user-attachments/assets/13c031a9-508c-466e-b019-f808b5c728c8)
+<img src= "https://github.com/user-attachments/assets/54be38d4-42ee-46ff-8832-55a8b1b02d5b" width = "300">
 
 ### Страница с выбором валют
-![IMG_2026](https://github.com/user-attachments/assets/8c9edc2f-53d9-467d-ab72-656bd1046f3f)
+<img src= "https://github.com/user-attachments/assets/8c9edc2f-53d9-467d-ab72-656bd1046f3f" width = "300">
 
 ### Виджеты приложения на рабочем столе
-![IMG_2027](https://github.com/user-attachments/assets/8baf21b0-1644-4dd4-97f8-5cacaf82dcae)
+<img src= "https://github.com/user-attachments/assets/8baf21b0-1644-4dd4-97f8-5cacaf82dcae" width = "300">
 
 ## 📥 Установка
 
