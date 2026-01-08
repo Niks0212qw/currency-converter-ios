@@ -1,118 +1,118 @@
 # Currency Converter iOS
 
-Приложение для конвертации валют на iOS и iPadOS с функциональностью калькулятора.
+A currency conversion application for iOS and iPadOS with calculator functionality.
 
-## 📱 Особенности
+## 📱 Features
 
-- 🌍 Поддержка 13 популярных валют
-- 📊 Актуальные курсы валют из ЦБ РФ и ExchangeRate API
-- 🧮 Встроенный калькулятор
-- 📱 Адаптивный интерфейс для iPhone и iPad
-- 🔄 Автоматическое обновление курсов
-- 🎨 Поддержка светлой и темной темы
-- 📊 Виджеты для домашнего экрана
-- ⌨️ Удобный ввод с экранной клавиатуры
+- 🌍 Support for 13 popular currencies
+- 📊 Real-time exchange rates from Central Bank of Russia and ExchangeRate API
+- 🧮 Built-in calculator
+- 📱 Adaptive interface for iPhone and iPad
+- 🔄 Automatic exchange rate updates
+- 🎨 Light and dark theme support
+- 📊 Home screen widgets
+- ⌨️ Convenient input with on-screen keyboard
 
-## 🌍 Поддерживаемые валюты
+## 🌍 Supported Currencies
 
-- 🇷🇺 Российский рубль (RUB)
-- 🇺🇸 Доллар США (USD)
-- 🇪🇺 Евро (EUR)
-- 🇹🇷 Турецкая лира (TRY)
-- 🇰🇿 Казахский тенге (KZT)
-- 🇨🇳 Китайский юань (CNY)
-- 🇦🇪 Дирхам ОАЭ (AED)
-- 🇺🇿 Узбекский сум (UZS)
-- 🇧🇾 Белорусский рубль (BYN)
-- 🇹🇭 Таиландский бат (THB)
-- 🇺🇦 Украинская гривна (UAH)
-- 🇬🇧 Британский фунт (GBP)
-- 🇯🇵 Японская йена (JPY)
+- 🇷🇺 Russian Ruble (RUB)
+- 🇺🇸 US Dollar (USD)
+- 🇪🇺 Euro (EUR)
+- 🇹🇷 Turkish Lira (TRY)
+- 🇰🇿 Kazakhstani Tenge (KZT)
+- 🇨🇳 Chinese Yuan (CNY)
+- 🇦🇪 UAE Dirham (AED)
+- 🇺🇿 Uzbekistani Som (UZS)
+- 🇧🇾 Belarusian Ruble (BYN)
+- 🇹🇭 Thai Baht (THB)
+- 🇺🇦 Ukrainian Hryvnia (UAH)
+- 🇬🇧 British Pound (GBP)
+- 🇯🇵 Japanese Yen (JPY)
 
-## 📸 Скриншоты
+## 📸 Screenshots
 
-### Главная страница
+### Main Page
 <img src= "https://github.com/user-attachments/assets/54be38d4-42ee-46ff-8832-55a8b1b02d5b" width = "325">
 
-### Страница с выбором валют
+### Currency Selection Page
 <img src= "https://github.com/user-attachments/assets/8c9edc2f-53d9-467d-ab72-656bd1046f3f" width = "325">
 
-### Виджеты приложения на рабочем столе
+### App Widgets on Home Screen
 <img src= "https://github.com/user-attachments/assets/8baf21b0-1644-4dd4-97f8-5cacaf82dcae" width = "325">
 
-## 📥 Установка
+## 📥 Installation
 
-### Через TestFlight
-*Скоро будет доступно*
+### Via TestFlight
+*Coming soon*
 
-### Сборка из исходного кода
+### Building from Source Code
 
-#### Системные требования
-- **Для разработки:**
-  - macOS 13.0 или выше
-  - Xcode 15.0 или выше
+#### System Requirements
+- **For Development:**
+  - macOS 13.0 or higher
+  - Xcode 15.0 or higher
   - iOS Deployment Target: 16.0+
 
-- **Для использования:**
-  - iPhone: iOS 16.0 или выше
-  - iPad: iPadOS 16.0 или выше
+- **For Usage:**
+  - iPhone: iOS 16.0 or higher
+  - iPad: iPadOS 16.0 or higher
 
-#### Инструкции по сборке
+#### Build Instructions
 
-1. **Клонируйте репозиторий:**
+1. **Clone the repository:**
 ```bash
 git clone https://github.com/Niks0212qw/currency-converter-ios.git
 cd currency-converter-ios
 ```
 
-2. **Откройте проект в Xcode:**
+2. **Open the project in Xcode:**
 ```bash
 open CurrencyConverter.xcodeproj
 ```
 
-3. **Настройте подпись:**
-   - Выберите ваш Apple ID в **Signing & Capabilities**
-   - Измените **Bundle Identifier** на уникальный
+3. **Configure signing:**
+   - Select your Apple ID in **Signing & Capabilities**
+   - Change **Bundle Identifier** to a unique one
 
-4. **Соберите и запустите:**
-   - Выберите целевое устройство или симулятор
-   - Нажмите ⌘+R для сборки и запуска
+4. **Build and run:**
+   - Select target device or simulator
+   - Press ⌘+R to build and run
 
-## 📊 Виджеты
+## 📊 Widgets
 
-Приложение включает виджеты для домашнего экрана:
+The application includes home screen widgets:
 
-### Маленький виджет
-- Отображает курсы USD и EUR
-- Компактный размер для быстрого просмотра
+### Small Widget
+- Displays USD and EUR rates
+- Compact size for quick view
 
-### Средний виджет
-- Показывает 4 основные валюты: USD, EUR, TRY, AED
-- Сетка 2×2 для удобного восприятия
+### Medium Widget
+- Shows 4 main currencies: USD, EUR, TRY, AED
+- 2×2 grid for convenient viewing
 
-## 🔧 Использование
+## 🔧 Usage
 
-### Основные функции
-- **Конвертация валют**: Выберите исходную и целевую валюту, введите сумму
-- **Калькулятор**: Выполняйте вычисления перед конвертацией
-- **Смена валют**: Нажмите кнопку со стрелками для быстрой смены
-- **Обновление курсов**: Потяните вниз для обновления или нажмите кнопку обновления
+### Main Functions
+- **Currency Conversion**: Select source and target currency, enter amount
+- **Calculator**: Perform calculations before conversion
+- **Currency Swap**: Tap the arrow button for quick swap
+- **Rate Updates**: Pull down to refresh or tap the update button
 
-### Навигация
-- **Выбор валют**: Нажмите на блок валюты для открытия списка
-- **Поиск валют**: Используйте поиск для быстрого нахождения нужной валюты
-- **Виджеты**: Добавьте виджеты на домашний экран для быстрого доступа к курсам
+### Navigation
+- **Currency Selection**: Tap on currency block to open list
+- **Currency Search**: Use search for quick finding of needed currency
+- **Widgets**: Add widgets to home screen for quick access to rates
 
-## 🏗 Архитектура
+## 🏗 Architecture
 
-### Технологии
-- **SwiftUI** - современный пользовательский интерфейс
-- **Combine** - реактивное программирование
-- **WidgetKit** - виджеты для домашнего экрана
-- **URLSession** - сетевые запросы
-- **UserDefaults** - локальное хранение данных
+### Technologies
+- **SwiftUI** - modern user interface
+- **Combine** - reactive programming
+- **WidgetKit** - home screen widgets
+- **URLSession** - network requests
+- **UserDefaults** - local data storage
 
-### Структура проекта
+### Project Structure
 ```
 CurrencyConverter/
 ├── App/
@@ -134,26 +134,26 @@ CurrencyConverter/
 
 ## 🌐 API
 
-### Источники данных
-- **ЦБ РФ API** (`cbr-xml-daily.ru`) - курсы валют к рублю
-- **ExchangeRate API** (`open.er-api.com`) - международные курсы
+### Data Sources
+- **Central Bank of Russia API** (`cbr-xml-daily.ru`) - currency rates to ruble
+- **ExchangeRate API** (`open.er-api.com`) - international rates
 
-### Обновление данных
-- Автоматическое обновление при запуске приложения
-- Ручное обновление по запросу пользователя
-- Кеширование данных для офлайн-работы
-- Резервные курсы при отсутствии интернета
+### Data Updates
+- Automatic update on app launch
+- Manual update on user request
+- Data caching for offline operation
+- Fallback rates when no internet connection
 
-## 🐛 Ограничения
+## 🐛 Limitations
 
-- Виджеты требуют iOS 16.0+
-- Некоторые функции могут быть недоступны в симуляторе
-- Курсы валют обновляются в зависимости от доступности API
+- Widgets require iOS 16.0+
+- Some features may be unavailable in simulator
+- Currency rates update depending on API availability
 
-## 📄 Лицензия
+## 📄 License
 
-Этот проект распространяется под лицензией MIT. См. файл [LICENSE](LICENSE) для получения дополнительной информации.
+This project is distributed under the MIT License. See the [LICENSE](LICENSE) file for more information.
 
-## 👨‍💻 Автор
+## 👨‍💻 Author
 
 **Nikita Krivonosov** - nikskrivonosovv@gmail.com
