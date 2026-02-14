@@ -1,0 +1,20 @@
+"currencies_title" = "Currencies";
+"search_placeholder" = "Search";
+"no_data" = "No data";
+"error_generic" = "Error";
+"source_cbr" = "CBR";
+"source_exchange_rate" = "ExchangeRate";
+
+"currency.rub" = "Russian Ruble";
+"currency.usd" = "US Dollar";
+"currency.eur" = "Euro";
+"currency.try" = "Turkish Lira";
+"currency.kzt" = "Kazakhstani Tenge";
+"currency.cny" = "Chinese Yuan";
+"currency.aed" = "UAE Dirham";
+"currency.uzs" = "Uzbekistani Som";
+"currency.byn" = "Belarusian Ruble";
+"currency.thb" = "Thai Baht";
+"currency.uah" = "Ukrainian Hryvnia";
+"currency.gbp" = "British Pound";
+"currency.jpy" = "Japanese Yen";

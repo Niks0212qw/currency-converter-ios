@@ -1,0 +1,20 @@
+"currencies_title" = "Валюты";
+"search_placeholder" = "Поиск";
+"no_data" = "Нет данных";
+"error_generic" = "Ошибка";
+"source_cbr" = "ЦБ РФ";
+"source_exchange_rate" = "ExchangeRate";
+
+"currency.rub" = "Российский рубль";
+"currency.usd" = "Доллар США";
+"currency.eur" = "Евро";
+"currency.try" = "Турецкая лира";
+"currency.kzt" = "Казахский тенге";
+"currency.cny" = "Китайский юань";
+"currency.aed" = "Дирхам ОАЭ";
+"currency.uzs" = "Узбекский сум";
+"currency.byn" = "Белорусский рубль";
+"currency.thb" = "Таиландский бат";
+"currency.uah" = "Украинская гривна";
+"currency.gbp" = "Британский фунт";
+"currency.jpy" = "Японская йена";

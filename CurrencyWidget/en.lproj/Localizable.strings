@@ -1,0 +1,35 @@
+"widget.display_name" = "Exchange Rates";
+"widget.description" = "Shows selected exchange rates relative to the base currency.";
+
+"intent.currency.type" = "Currency";
+"intent.currency.rub" = "RUB - Russian Ruble";
+"intent.currency.usd" = "USD - US Dollar";
+"intent.currency.eur" = "EUR - Euro";
+"intent.currency.try" = "TRY - Turkish Lira";
+"intent.currency.kzt" = "KZT - Kazakhstani Tenge";
+"intent.currency.cny" = "CNY - Chinese Yuan";
+"intent.currency.aed" = "AED - UAE Dirham";
+"intent.currency.uzs" = "UZS - Uzbekistani Som";
+"intent.currency.byn" = "BYN - Belarusian Ruble";
+"intent.currency.thb" = "THB - Thai Baht";
+"intent.currency.uah" = "UAH - Ukrainian Hryvnia";
+"intent.currency.gbp" = "GBP - British Pound";
+"intent.currency.jpy" = "JPY - Japanese Yen";
+"intent.config.title" = "Widget Settings";
+"intent.config.description" = "Choose a base currency and currencies to display.";
+"intent.base_currency" = "Base currency";
+"intent.currencies" = "Currencies";
+
+"currency.rub" = "Russian Ruble";
+"currency.usd" = "US Dollar";
+"currency.eur" = "Euro";
+"currency.try" = "Turkish Lira";
+"currency.kzt" = "Kazakhstani Tenge";
+"currency.cny" = "Chinese Yuan";
+"currency.aed" = "UAE Dirham";
+"currency.uzs" = "Uzbekistani Som";
+"currency.byn" = "Belarusian Ruble";
+"currency.thb" = "Thai Baht";
+"currency.uah" = "Ukrainian Hryvnia";
+"currency.gbp" = "British Pound";
+"currency.jpy" = "Japanese Yen";

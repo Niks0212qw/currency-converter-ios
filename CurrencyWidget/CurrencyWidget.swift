@@ -1,6 +1,33 @@
 import WidgetKit
 import SwiftUI
-import Intents
+import AppIntents
+
+// Резервные курсы (база USD) для использования при недоступности API
+private let widgetBackupRatesUSD: [String: Double] = [
+    "USD": 1.0,
+    "EUR": 0.92,
+    "RUB": 85.49,
+    "GBP": 0.78,
+    "JPY": 149.8,
+    "CNY": 7.18,
+    "TRY": 32.5,
+    "KZT": 450.2,
+    "AED": 3.67,
+    "UZS": 12450.0,
+    "BYN": 3.25,
+    "THB": 35.8,
+    "UAH": 39.5
+]
+
+private func widgetBackupRatesRUB() -> [String: Double] {
+    let rubPerUSD = widgetBackupRatesUSD["RUB"] ?? 1.0
+    var rubRates: [String: Double] = ["RUB": 1.0]
+    for (code, usdRate) in widgetBackupRatesUSD where code != "RUB" {
+        guard usdRate != 0 else { continue }
+        rubRates[code] = rubPerUSD / usdRate
+    }
+    return rubRates
+}
 
 // MARK: - Расширение для условного применения модификаторов
 extension View {
@@ -30,14 +57,30 @@ struct CurrencyRate: Codable, Hashable {
         
         // Установка эмодзи-флага в зависимости от кода валюты
         switch code {
+        case "RUB": self.flagEmoji = "🇷🇺"
         case "USD": self.flagEmoji = "🇺🇸"
         case "EUR": self.flagEmoji = "🇪🇺"
-        case "CNY": self.flagEmoji = "🇨🇳"
         case "TRY": self.flagEmoji = "🇹🇷"
+        case "KZT": self.flagEmoji = "🇰🇿"
+        case "CNY": self.flagEmoji = "🇨🇳"
         case "AED": self.flagEmoji = "🇦🇪"
+        case "UZS": self.flagEmoji = "🇺🇿"
+        case "BYN": self.flagEmoji = "🇧🇾"
+        case "THB": self.flagEmoji = "🇹🇭"
+        case "UAH": self.flagEmoji = "🇺🇦"
+        case "GBP": self.flagEmoji = "🇬🇧"
+        case "JPY": self.flagEmoji = "🇯🇵"
         default: self.flagEmoji = "🏳️"
         }
     }
+}
+
+// Структура для декодирования ответа ExchangeRate API
+struct ExchangeRatesResponse: Codable {
+    let result: String
+    let base_code: String
+    let time_last_update_unix: Int
+    let rates: [String: Double]
 }
 
 // Структура для декодирования ответа API Центрального Банка России
@@ -62,132 +105,225 @@ struct CBRResponse: Decodable {
 // Модель с данными для виджета
 struct CurrencyEntry: TimelineEntry {
     let date: Date
+    let baseCode: String
     let rates: [CurrencyRate]
     let lastUpdated: String
 }
 
 // MARK: - Провайдер для виджета
 
-struct Provider: TimelineProvider {
-    // Заполнитель для предварительного просмотра
+struct Provider: AppIntentTimelineProvider {
+    // Лимитируем частоту сетевых запросов для защиты от блокировок API.
+    private static let apiMinRequestInterval: TimeInterval = 2.0
+    private static let cbrLastRequestKey = "CurrencyWidget.iOS.cbr.lastRequest"
+    private static let usdLastRequestKey = "CurrencyWidget.iOS.usd.lastRequest"
+    private static let cbrRatesCacheKey = "CurrencyWidget.iOS.cbr.cachedRates"
+    private static let usdRatesCacheKey = "CurrencyWidget.iOS.usd.cachedRates"
+
     func placeholder(in context: Context) -> CurrencyEntry {
         CurrencyEntry(
             date: Date(),
-            rates: [
-                CurrencyRate(code: "USD", name: "Доллар США", rate: 85.57),
-                CurrencyRate(code: "EUR", name: "Евро", rate: 93.61),
-                CurrencyRate(code: "TRY", name: "Турецкая лира", rate: 2.65),
-                CurrencyRate(code: "AED", name: "Дирхам ОАЭ", rate: 23.30)
-            ],
-            lastUpdated: "14.03.2025, 10:00"
+            baseCode: "RUB",
+            rates: getPreviewRates(),
+            lastUpdated: formattedUpdatedAt(Date())
         )
     }
     
-    // Снимок для галереи виджетов
-    func getSnapshot(in context: Context, completion: @escaping (CurrencyEntry) -> Void) {
-        let entry = CurrencyEntry(
-            date: Date(),
-            rates: [
-                CurrencyRate(code: "USD", name: "Доллар США", rate: 85.57),
-                CurrencyRate(code: "EUR", name: "Евро", rate: 93.61),
-                CurrencyRate(code: "TRY", name: "Турецкая лира", rate: 2.65),
-                CurrencyRate(code: "AED", name: "Дирхам ОАЭ", rate: 23.30)
-            ],
-            lastUpdated: "14.03.2025, 10:00"
-        )
-        completion(entry)
+    func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> CurrencyEntry {
+        if context.isPreview {
+            return previewEntry(for: configuration)
+        }
+        return await fetchEntry(for: configuration)
     }
     
-    // Таймлайн для обновления виджета
-    func getTimeline(in context: Context, completion: @escaping (Timeline<CurrencyEntry>) -> Void) {
-        // Запрос к API ЦБ РФ
-        guard let url = URL(string: "https://www.cbr-xml-daily.ru/daily_json.js") else {
-            let entry = createBackupEntry()
-            let timeline = Timeline(entries: [entry], policy: .after(Calendar.current.date(byAdding: .hour, value: 1, to: Date())!))
-            completion(timeline)
-            return
+    func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<CurrencyEntry> {
+        let entry = await fetchEntry(for: configuration)
+        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 3, to: Date()) ?? Date()
+        return Timeline(entries: [entry], policy: .after(nextUpdate))
+    }
+    
+    private func fetchEntry(for configuration: ConfigurationAppIntent) async -> CurrencyEntry {
+        let base = configuration.baseCurrency
+        let selectedCodes = normalizedCodes(from: configuration)
+        
+        let needsCBR = base == .rub || selectedCodes.contains(.rub)
+        let needsUSD = base != .rub && selectedCodes.contains(where: { $0 != .rub })
+        
+        async let cbrTask: [String: Double]? = needsCBR ? fetchCBRRates() : nil
+        async let usdTask: [String: Double]? = needsUSD ? fetchUSDRates() : nil
+        
+        let cbrRates = await cbrTask ?? widgetBackupRatesRUB()
+        let usdRates = await usdTask ?? widgetBackupRatesUSD
+        
+        let rates = buildRates(
+            baseCode: base.rawValue,
+            selectedCodes: selectedCodes,
+            cbrRates: cbrRates,
+            usdRates: usdRates
+        )
+        
+        let updatedAt = Date()
+        return CurrencyEntry(
+            date: updatedAt,
+            baseCode: base.rawValue,
+            rates: rates.isEmpty ? getPreviewRates() : rates,
+            lastUpdated: formattedUpdatedAt(updatedAt)
+        )
+    }
+    
+    private func normalizedCodes(from configuration: ConfigurationAppIntent) -> [CurrencyCode] {
+        var codes = configuration.currencies
+        if codes.isEmpty {
+            codes = ConfigurationAppIntent.defaultCurrencies
+        }
+        let unique = Set(codes)
+        var ordered = CurrencyCode.allCases.filter { unique.contains($0) && $0 != configuration.baseCurrency }
+        if ordered.isEmpty {
+            let fallbackSet = Set(ConfigurationAppIntent.defaultCurrencies)
+            ordered = CurrencyCode.allCases.filter { fallbackSet.contains($0) && $0 != configuration.baseCurrency }
+        }
+        return ordered
+    }
+    
+    private func buildRates(
+        baseCode: String,
+        selectedCodes: [CurrencyCode],
+        cbrRates: [String: Double],
+        usdRates: [String: Double]
+    ) -> [CurrencyRate] {
+        var rates: [CurrencyRate] = []
+        for code in selectedCodes {
+            let target = code.rawValue
+            if let rate = computeRate(base: baseCode, target: target, cbrRates: cbrRates, usdRates: usdRates) {
+                rates.append(CurrencyRate(code: target, name: getCurrencyName(for: target), rate: rate))
+            }
+        }
+        return rates
+    }
+    
+    private func computeRate(
+        base: String,
+        target: String,
+        cbrRates: [String: Double],
+        usdRates: [String: Double]
+    ) -> Double? {
+        guard base != target else { return nil }
+        
+        if base == "RUB" {
+            return cbrRates[target]
         }
         
-        let task = URLSession.shared.dataTask(with: url) { data, response, error in
-            // Обработка ошибок или отсутствия данных
-            guard let data = data, error == nil else {
-                let entry = createBackupEntry()
-                let timeline = Timeline(entries: [entry], policy: .after(Calendar.current.date(byAdding: .hour, value: 1, to: Date())!))
-                completion(timeline)
-                return
+        if target == "RUB" {
+            guard let rubPerBase = cbrRates[base], rubPerBase != 0 else { return nil }
+            return 1.0 / rubPerBase
+        }
+        
+        guard let usdBase = usdRates[base], let usdTarget = usdRates[target], usdTarget != 0 else {
+            return nil
+        }
+        
+        return usdBase / usdTarget
+    }
+    
+    private func fetchCBRRates() async -> [String: Double]? {
+        let defaults = UserDefaults.standard
+        let now = Date().timeIntervalSince1970
+        
+        if let lastRequest = defaults.object(forKey: Self.cbrLastRequestKey) as? TimeInterval,
+           now - lastRequest < Self.apiMinRequestInterval {
+            return defaults.dictionary(forKey: Self.cbrRatesCacheKey) as? [String: Double]
+        }
+        
+        defaults.set(now, forKey: Self.cbrLastRequestKey)
+        
+        guard let url = URL(string: "https://www.cbr-xml-daily.ru/daily_json.js") else {
+            return defaults.dictionary(forKey: Self.cbrRatesCacheKey) as? [String: Double]
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                return defaults.dictionary(forKey: Self.cbrRatesCacheKey) as? [String: Double]
             }
             
-            // Декодирование JSON-ответа
-            do {
-                let cbrResponse = try JSONDecoder().decode(CBRResponse.self, from: data)
-                
-                // Массив для хранения курсов валют
-                var rates: [CurrencyRate] = []
-                
-                // Добавляем доллар, евро, лиру и дирхам
-                if let usdData = cbrResponse.Valute["USD"] {
-                    let usdRate = usdData.Value / Double(usdData.Nominal)
-                    rates.append(CurrencyRate(code: "USD", name: "Доллар США", rate: usdRate))
-                }
-                
-                if let eurData = cbrResponse.Valute["EUR"] {
-                    let eurRate = eurData.Value / Double(eurData.Nominal)
-                    rates.append(CurrencyRate(code: "EUR", name: "Евро", rate: eurRate))
-                }
-                
-                if let tryData = cbrResponse.Valute["TRY"] {
-                    let tryRate = tryData.Value / Double(tryData.Nominal)
-                    rates.append(CurrencyRate(code: "TRY", name: "Турецкая лира", rate: tryRate))
-                }
-                
-                if let aedData = cbrResponse.Valute["AED"] {
-                    let aedRate = aedData.Value / Double(aedData.Nominal)
-                    rates.append(CurrencyRate(code: "AED", name: "Дирхам ОАЭ", rate: aedRate))
-                }
-                
-                // Форматирование даты обновления
-                let dateFormatter = DateFormatter()
-                dateFormatter.dateFormat = "dd.MM.yyyy, HH:mm"
-                let lastUpdated = dateFormatter.string(from: Date())
-                
-                // Создание записи для таймлайна
-                let entry = CurrencyEntry(
-                    date: Date(),
-                    rates: rates,
-                    lastUpdated: lastUpdated
-                )
-                
-                // Создание таймлайна с обновлением через 1 час
-                let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: Date())!
-                let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
-                
-                completion(timeline)
-                
-            } catch {
-                let entry = createBackupEntry()
-                let timeline = Timeline(entries: [entry], policy: .after(Calendar.current.date(byAdding: .hour, value: 1, to: Date())!))
-                completion(timeline)
+            let cbrResponse = try JSONDecoder().decode(CBRResponse.self, from: data)
+            var rates: [String: Double] = ["RUB": 1.0]
+            for (code, currencyData) in cbrResponse.Valute {
+                let rateInRub = currencyData.Value / Double(currencyData.Nominal)
+                rates[code] = rateInRub
             }
+            defaults.set(rates, forKey: Self.cbrRatesCacheKey)
+            return rates
+        } catch {
+            return defaults.dictionary(forKey: Self.cbrRatesCacheKey) as? [String: Double]
         }
-        
-        task.resume()
     }
     
-    // Функция для создания резервной записи
-    private func createBackupEntry() -> CurrencyEntry {
+    private func fetchUSDRates() async -> [String: Double]? {
+        let defaults = UserDefaults.standard
+        let now = Date().timeIntervalSince1970
+        
+        if let lastRequest = defaults.object(forKey: Self.usdLastRequestKey) as? TimeInterval,
+           now - lastRequest < Self.apiMinRequestInterval {
+            return defaults.dictionary(forKey: Self.usdRatesCacheKey) as? [String: Double]
+        }
+        
+        defaults.set(now, forKey: Self.usdLastRequestKey)
+        
+        guard let url = URL(string: "https://open.er-api.com/v6/latest/USD") else {
+            return defaults.dictionary(forKey: Self.usdRatesCacheKey) as? [String: Double]
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                return defaults.dictionary(forKey: Self.usdRatesCacheKey) as? [String: Double]
+            }
+            
+            let ratesResponse = try JSONDecoder().decode(ExchangeRatesResponse.self, from: data)
+            guard ratesResponse.result == "success" else {
+                return defaults.dictionary(forKey: Self.usdRatesCacheKey) as? [String: Double]
+            }
+            defaults.set(ratesResponse.rates, forKey: Self.usdRatesCacheKey)
+            return ratesResponse.rates
+        } catch {
+            return defaults.dictionary(forKey: Self.usdRatesCacheKey) as? [String: Double]
+        }
+    }
+    
+    private func previewEntry(for configuration: ConfigurationAppIntent) -> CurrencyEntry {
+        let baseCode = configuration.baseCurrency.rawValue
+        let selectedCodes = normalizedCodes(from: configuration)
+        let previewRates = getPreviewRates()
+        let selectedSet = Set(selectedCodes.map { $0.rawValue })
+        let filtered = previewRates.filter { selectedSet.contains($0.code) }
+        let updatedAt = Date()
+        return CurrencyEntry(
+            date: updatedAt,
+            baseCode: baseCode,
+            rates: filtered.isEmpty ? previewRates : filtered,
+            lastUpdated: formattedUpdatedAt(updatedAt)
+        )
+    }
+    
+    private func formattedUpdatedAt(_ date: Date) -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "dd.MM.yyyy, HH:mm"
-        
-        return CurrencyEntry(
-            date: Date(),
-            rates: [
-                CurrencyRate(code: "USD", name: "Доллар США", rate: 85.57),
-                CurrencyRate(code: "EUR", name: "Евро", rate: 93.61),
-                CurrencyRate(code: "TRY", name: "Турецкая лира", rate: 2.65),
-                CurrencyRate(code: "AED", name: "Дирхам ОАЭ", rate: 23.30)
-            ],
-            lastUpdated: "\(dateFormatter.string(from: Date())) (резерв)"
-        )
+        return dateFormatter.string(from: date)
+    }
+    
+    private func getCurrencyName(for code: String) -> String {
+        WidgetL10n.currencyName(code)
+    }
+    
+    private func getPreviewRates() -> [CurrencyRate] {
+        [
+            CurrencyRate(code: "USD", name: WidgetL10n.currencyName("USD"), rate: 93.5),
+            CurrencyRate(code: "EUR", name: WidgetL10n.currencyName("EUR"), rate: 100.2),
+            CurrencyRate(code: "CNY", name: WidgetL10n.currencyName("CNY"), rate: 12.8),
+            CurrencyRate(code: "TRY", name: WidgetL10n.currencyName("TRY"), rate: 2.8),
+            CurrencyRate(code: "KZT", name: WidgetL10n.currencyName("KZT"), rate: 0.2)
+        ]
     }
 }
 
@@ -196,6 +332,7 @@ struct Provider: TimelineProvider {
 // Компактная ячейка для отображения валюты
 struct CurrencyGridCell: View {
     var rate: CurrencyRate
+    var baseCode: String
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -209,7 +346,7 @@ struct CurrencyGridCell: View {
                     .foregroundColor(colorScheme == .dark ? .white : .black)
             }
             
-            Text(String(format: "%.2f ₽", rate.rate))
+            Text(String(format: "%.2f %@", rate.rate, baseCode))
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(colorScheme == .dark ? .white : .black)
         }
@@ -220,17 +357,13 @@ struct CurrencyGridCell: View {
     }
 }
 
-// Виджет в маленьком размере (показывает доллар и евро)
+// Виджет в маленьком размере
 struct CurrencyWidgetSmallView: View {
     var entry: Provider.Entry
     @Environment(\.colorScheme) var colorScheme
     
-    // Функция для получения USD и EUR валют
     private func getMainCurrencies() -> [CurrencyRate] {
-        let mainCodes = ["USD", "EUR"]
-        let mainRates = entry.rates.filter { mainCodes.contains($0.code) }
-            .sorted { mainCodes.firstIndex(of: $0.code)! < mainCodes.firstIndex(of: $1.code)! }
-        return mainRates
+        Array(entry.rates.prefix(2))
     }
     
     var body: some View {
@@ -240,7 +373,7 @@ struct CurrencyWidgetSmallView: View {
             // Сетка валют 2x1
             VStack(spacing: 8) {
                 ForEach(currencies, id: \.code) { rate in
-                    CurrencyGridCell(rate: rate)
+                    CurrencyGridCell(rate: rate, baseCode: entry.baseCode)
                 }
             }
             .padding(.horizontal, 8)
@@ -251,7 +384,7 @@ struct CurrencyWidgetSmallView: View {
             // Подвал
             HStack {
                 Spacer()
-                Text("Converter")
+                Text("Converter · \(entry.baseCode)")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.secondary)
                 Spacer()
@@ -269,29 +402,11 @@ struct CurrencyWidgetMediumView: View {
     
     // Функция для разделения валют на две строки
     private func currencyRows() -> [[CurrencyRate]] {
-        // Определяем фиксированный порядок валют: USD, EUR, TRY, AED
-        let orderedCodes = ["USD", "EUR", "TRY", "AED"]
+        let orderedRates = entry.rates
+        let firstRow = Array(orderedRates.prefix(2))
+        let secondRow = Array(orderedRates.dropFirst(2).prefix(2))
         
-        // Создаем упорядоченный массив по заданному порядку
-        var orderedRates: [CurrencyRate] = []
-        for code in orderedCodes {
-            if let rate = entry.rates.first(where: { $0.code == code }) {
-                orderedRates.append(rate)
-            }
-        }
-        
-        // Добавляем любые оставшиеся валюты, которые не были в orderedCodes
-        for rate in entry.rates {
-            if !orderedCodes.contains(rate.code) && !orderedRates.contains(where: { $0.code == rate.code }) {
-                orderedRates.append(rate)
-            }
-        }
-        
-        // Разделяем на две строки
-        let firstRow = Array(orderedRates.prefix(2))  // USD, EUR
-        let secondRow = Array(orderedRates.dropFirst(2).prefix(2))  // TRY, AED
-        
-        return [firstRow, secondRow]
+        return [firstRow, secondRow].filter { !$0.isEmpty }
     }
     
     var body: some View {
@@ -301,7 +416,7 @@ struct CurrencyWidgetMediumView: View {
                 ForEach(currencyRows(), id: \.self) { row in
                     HStack(spacing: 8) {
                         ForEach(row, id: \.code) { rate in
-                            CurrencyGridCell(rate: rate)
+                            CurrencyGridCell(rate: rate, baseCode: entry.baseCode)
                         }
                     }
                     .padding(.horizontal, 8)
@@ -314,7 +429,7 @@ struct CurrencyWidgetMediumView: View {
             // Подвал
             HStack {
                 Spacer()
-                Text("Converter")
+                Text("Converter · \(entry.baseCode)")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.secondary)
                 Spacer()
@@ -331,7 +446,7 @@ struct CurrencyWidget: Widget {
     let kind: String = "CurrencyWidget"
     
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: Provider()) { entry in
+        AppIntentConfiguration(kind: kind, intent: ConfigurationAppIntent.self, provider: Provider()) { entry in
             Group {
                 GeometryReader { geometry in
                     if geometry.size.width < 170 {
@@ -349,8 +464,8 @@ struct CurrencyWidget: Widget {
                 }
             }
         }
-        .configurationDisplayName("Курс валют")
-        .description("Отображает текущий курс основных валют к рублю.")
+        .configurationDisplayName("widget.display_name")
+        .description("widget.description")
         .supportedFamilies([.systemSmall, .systemMedium])
     }
 }
@@ -361,11 +476,12 @@ struct CurrencyWidget_Previews: PreviewProvider {
     static var previews: some View {
         let sampleEntry = CurrencyEntry(
             date: Date(),
+            baseCode: "RUB",
             rates: [
-                CurrencyRate(code: "USD", name: "Доллар США", rate: 85.57),
-                CurrencyRate(code: "EUR", name: "Евро", rate: 93.61),
-                CurrencyRate(code: "TRY", name: "Турецкая лира", rate: 2.65),
-                CurrencyRate(code: "AED", name: "Дирхам ОАЭ", rate: 23.30)
+                CurrencyRate(code: "USD", name: WidgetL10n.currencyName("USD"), rate: 85.57),
+                CurrencyRate(code: "EUR", name: WidgetL10n.currencyName("EUR"), rate: 93.61),
+                CurrencyRate(code: "TRY", name: WidgetL10n.currencyName("TRY"), rate: 2.65),
+                CurrencyRate(code: "AED", name: WidgetL10n.currencyName("AED"), rate: 23.30)
             ],
             lastUpdated: "14.03.2025, 10:00"
         )

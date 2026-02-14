@@ -92,7 +92,7 @@ struct CurrencyRowView: View {
         if currency.code == "RUB" {
             // Для рубля используем курсы ЦБ РФ, где USD хранит стоимость 1 USD в рублях
             guard let usdRate = model.cbrRates["USD"] else {
-                return "Нет данных"
+                return AppL10n.text("no_data")
             }
             if let formattedRate = formatter.string(from: NSNumber(value: usdRate)) {
                 return "1 USD = \(formattedRate) \(currency.code)"
@@ -101,14 +101,14 @@ struct CurrencyRowView: View {
             // Для остальных валют используем ExchangeRate API
             guard let usdRate = model.exchangeRates["USD"],
                   let currencyRate = model.exchangeRates[currency.code] else {
-                return "Нет данных"
+                return AppL10n.text("no_data")
             }
             let rate = currencyRate / usdRate
             if let formattedRate = formatter.string(from: NSNumber(value: rate)) {
                 return "1 USD = \(formattedRate) \(currency.code)"
             }
         }
-        return "Нет данных"
+        return AppL10n.text("no_data")
     }
 }
 
@@ -120,7 +120,7 @@ struct CustomSearchBar: View {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(.gray)
             
-            TextField("Поиск", text: $text)
+            TextField(AppL10n.text("search_placeholder"), text: $text)
                 .foregroundColor(.white)
             
             if !text.isEmpty {
@@ -146,13 +146,13 @@ struct CurrencyPickerView_Previews: PreviewProvider {
         
         return NavigationView {
             CurrencyPickerView(
-                selectedCurrency: .constant(Currency(code: "USD", name: "Доллар США", flagName: "usa")),
+                selectedCurrency: .constant(Currency(code: "USD", name: AppL10n.currencyName("USD"), flagName: "usa")),
                 availableCurrencies: [
-                    Currency(code: "USD", name: "Доллар США", flagName: "usa"),
-                    Currency(code: "EUR", name: "Евро", flagName: "europe"),
-                    Currency(code: "RUB", name: "Российский рубль", flagName: "russia")
+                    Currency(code: "USD", name: AppL10n.currencyName("USD"), flagName: "usa"),
+                    Currency(code: "EUR", name: AppL10n.currencyName("EUR"), flagName: "europe"),
+                    Currency(code: "RUB", name: AppL10n.currencyName("RUB"), flagName: "russia")
                 ],
-                title: "Валюты",
+                title: AppL10n.text("currencies_title"),
                 onCurrencySelected: { _ in }
             )
             .environmentObject(model)

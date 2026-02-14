@@ -1,0 +1,35 @@
+"widget.display_name" = "Курс валют";
+"widget.description" = "Отображает текущий курс выбранных валют к базовой валюте.";
+
+"intent.currency.type" = "Валюта";
+"intent.currency.rub" = "RUB - Российский рубль";
+"intent.currency.usd" = "USD - Доллар США";
+"intent.currency.eur" = "EUR - Евро";
+"intent.currency.try" = "TRY - Турецкая лира";
+"intent.currency.kzt" = "KZT - Казахский тенге";
+"intent.currency.cny" = "CNY - Китайский юань";
+"intent.currency.aed" = "AED - Дирхам ОАЭ";
+"intent.currency.uzs" = "UZS - Узбекский сум";
+"intent.currency.byn" = "BYN - Белорусский рубль";
+"intent.currency.thb" = "THB - Таиландский бат";
+"intent.currency.uah" = "UAH - Украинская гривна";
+"intent.currency.gbp" = "GBP - Британский фунт";
+"intent.currency.jpy" = "JPY - Японская йена";
+"intent.config.title" = "Настройки виджета";
+"intent.config.description" = "Выберите базовую валюту и валюты для отображения.";
+"intent.base_currency" = "Базовая валюта";
+"intent.currencies" = "Валюты";
+
+"currency.rub" = "Российский рубль";
+"currency.usd" = "Доллар США";
+"currency.eur" = "Евро";
+"currency.try" = "Турецкая лира";
+"currency.kzt" = "Казахский тенге";
+"currency.cny" = "Китайский юань";
+"currency.aed" = "Дирхам ОАЭ";
+"currency.uzs" = "Узбекский сум";
+"currency.byn" = "Белорусский рубль";
+"currency.thb" = "Таиландский бат";
+"currency.uah" = "Украинская гривна";
+"currency.gbp" = "Британский фунт";
+"currency.jpy" = "Японская йена";

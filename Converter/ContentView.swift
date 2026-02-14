@@ -77,8 +77,12 @@ enum CalculatorOperation {
 
 class CurrencyCalculatorModel: ObservableObject {
     @Published var displayValue: String = "0"
-    @Published var fromCurrency: Currency
-    @Published var toCurrency: Currency
+    @Published var fromCurrency: Currency {
+        didSet { persistSelectedCurrencies() }
+    }
+    @Published var toCurrency: Currency {
+        didSet { persistSelectedCurrencies() }
+    }
     @Published var calculationHistory: String = ""
     @Published var conversionRate: Double = 0.012
     @Published var lastUpdated: String = ""
@@ -100,23 +104,23 @@ class CurrencyCalculatorModel: ObservableObject {
     @Published var exchangeRates: [String: Double] = [:]
     
     let availableCurrencies: [Currency] = [
-        Currency(code: "RUB", name: "Российский рубль", flagName: "russia"),
-        Currency(code: "USD", name: "Доллар США", flagName: "usa"),
-        Currency(code: "EUR", name: "Евро", flagName: "europe"),
-        Currency(code: "TRY", name: "Турецкая лира", flagName: "turkey"),
-        Currency(code: "KZT", name: "Казахский тенге", flagName: "kazakhstan"),
-        Currency(code: "CNY", name: "Китайский юань", flagName: "china"),
-        Currency(code: "AED", name: "Дирхам ОАЭ", flagName: "uae"),
-        Currency(code: "UZS", name: "Узбекский сум", flagName: "uzbekistan"),
-        Currency(code: "BYN", name: "Белорусский рубль", flagName: "belarus"),
-        Currency(code: "THB", name: "Таиландский бат", flagName: "thailand"),
-        Currency(code: "UAH", name: "Украинская гривна", flagName: "ukraine"),
-        Currency(code: "GBP", name: "Британский фунт", flagName: "uk"),
-        Currency(code: "JPY", name: "Японская йена", flagName: "japan")
+        Currency(code: "RUB", name: AppL10n.currencyName("RUB"), flagName: "russia"),
+        Currency(code: "USD", name: AppL10n.currencyName("USD"), flagName: "usa"),
+        Currency(code: "EUR", name: AppL10n.currencyName("EUR"), flagName: "europe"),
+        Currency(code: "TRY", name: AppL10n.currencyName("TRY"), flagName: "turkey"),
+        Currency(code: "KZT", name: AppL10n.currencyName("KZT"), flagName: "kazakhstan"),
+        Currency(code: "CNY", name: AppL10n.currencyName("CNY"), flagName: "china"),
+        Currency(code: "AED", name: AppL10n.currencyName("AED"), flagName: "uae"),
+        Currency(code: "UZS", name: AppL10n.currencyName("UZS"), flagName: "uzbekistan"),
+        Currency(code: "BYN", name: AppL10n.currencyName("BYN"), flagName: "belarus"),
+        Currency(code: "THB", name: AppL10n.currencyName("THB"), flagName: "thailand"),
+        Currency(code: "UAH", name: AppL10n.currencyName("UAH"), flagName: "ukraine"),
+        Currency(code: "GBP", name: AppL10n.currencyName("GBP"), flagName: "uk"),
+        Currency(code: "JPY", name: AppL10n.currencyName("JPY"), flagName: "japan")
     ]
     
-    // Резервные курсы на случай проблем с API
-    private let backupRates: [String: Double] = [
+    // Резервные курсы на случай проблем с API (база USD)
+    private let backupRatesUSD: [String: Double] = [
         "USD": 1.0,
         "EUR": 0.92,
         "RUB": 85.49,
@@ -131,18 +135,67 @@ class CurrencyCalculatorModel: ObservableObject {
         "THB": 35.8,
         "UAH": 39.5
     ]
+    // Резервные курсы в RUB-базе (1 единица валюты = X RUB)
+    private let backupRatesRUB: [String: Double]
+    private var refreshTimer: Timer?
+    private let defaults = UserDefaults.standard
+    private let fromCurrencyCodeKey = "CurrencyCalculator.selectedFromCurrencyCode"
+    private let toCurrencyCodeKey = "CurrencyCalculator.selectedToCurrencyCode"
     
     init() {
-        // Меняем порядок валют при инициализации
-        self.fromCurrency = availableCurrencies[1] // USD (был index 0 - RUB)
-        self.toCurrency = availableCurrencies[0] // RUB (был index 1 - USD)
+        self.backupRatesRUB = CurrencyCalculatorModel.makeRUBBackup(from: backupRatesUSD)
+        
+        let defaultFrom = availableCurrencies.first(where: { $0.code == "USD" }) ?? availableCurrencies[1]
+        let defaultTo = availableCurrencies.first(where: { $0.code == "RUB" }) ?? availableCurrencies[0]
+        
+        let savedFromCode = defaults.string(forKey: fromCurrencyCodeKey)
+        let savedToCode = defaults.string(forKey: toCurrencyCodeKey)
+        
+        self.fromCurrency = availableCurrencies.first(where: { $0.code == savedFromCode }) ?? defaultFrom
+        self.toCurrency = availableCurrencies.first(where: { $0.code == savedToCode }) ?? defaultTo
+        
+        if self.fromCurrency.code == self.toCurrency.code {
+            self.toCurrency = defaultTo.code == self.fromCurrency.code
+                ? (availableCurrencies.first(where: { $0.code != self.fromCurrency.code }) ?? defaultTo)
+                : defaultTo
+        }
         
         // Используем резервные курсы при инициализации
-        self.exchangeRates = backupRates
-        self.cbrRates = backupRates
+        self.exchangeRates = backupRatesUSD
+        self.cbrRates = backupRatesRUB
+        persistSelectedCurrencies()
+        updateConversionRate()
         
         // Загружаем актуальные курсы из обоих источников
         fetchAllExchangeRates()
+        scheduleAutoRefresh()
+    }
+    
+    deinit {
+        refreshTimer?.invalidate()
+    }
+    
+    private static func makeRUBBackup(from usdRates: [String: Double]) -> [String: Double] {
+        let rubPerUSD = usdRates["RUB"] ?? 1.0
+        var rubRates: [String: Double] = ["RUB": 1.0]
+        for (code, usdRate) in usdRates where code != "RUB" {
+            guard usdRate != 0 else { continue }
+            rubRates[code] = rubPerUSD / usdRate
+        }
+        return rubRates
+    }
+    
+    private func persistSelectedCurrencies() {
+        defaults.set(fromCurrency.code, forKey: fromCurrencyCodeKey)
+        defaults.set(toCurrency.code, forKey: toCurrencyCodeKey)
+        defaults.synchronize()
+    }
+    
+    private func scheduleAutoRefresh() {
+        refreshTimer?.invalidate()
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: 12 * 60 * 60, repeats: true) { [weak self] _ in
+            self?.fetchAllExchangeRates()
+        }
     }
     
     // Функция для получения курсов из обоих источников с использованием DispatchGroup
@@ -183,6 +236,12 @@ class CurrencyCalculatorModel: ObservableObject {
                     return
                 }
                 
+                if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+                    print("CBR request HTTP error: \(http.statusCode)")
+                    completion()
+                    return
+                }
+                
                 do {
                     let cbrResponse = try JSONDecoder().decode(CBRResponse.self, from: data)
                     var rates: [String: Double] = ["RUB": 1.0]
@@ -193,7 +252,7 @@ class CurrencyCalculatorModel: ObservableObject {
                     }
                     
                     self.cbrRates = rates
-                    self.updateLastUpdated(date: self.parseDate(cbrResponse.Date))
+                    self.updateLastUpdated()
                     print("CBR rates updated successfully.")
                 } catch {
                     print("Error decoding CBR data: \(error)")
@@ -220,15 +279,22 @@ class CurrencyCalculatorModel: ObservableObject {
                     return
                 }
                 
+                if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+                    print("ExchangeRate HTTP error: \(http.statusCode)")
+                    completion()
+                    return
+                }
+                
                 do {
                     let ratesResponse = try JSONDecoder().decode(ExchangeRatesResponse.self, from: data)
-                    self.exchangeRates = ratesResponse.rates
                     
-                    // Обновляем дату последнего обновления, если она ещё не установлена ЦБР
-                    if self.lastUpdated.isEmpty {
-                        let date = Date(timeIntervalSince1970: TimeInterval(ratesResponse.time_last_update_unix))
-                        self.updateLastUpdated(date: date)
+                    guard ratesResponse.result == "success" else {
+                        print("ExchangeRate API error: \(ratesResponse.result)")
+                        completion()
+                        return
                     }
+                    self.exchangeRates = ratesResponse.rates
+                    self.updateLastUpdated()
                     print("ExchangeRate rates updated successfully.")
                 } catch {
                     print("Error decoding ExchangeRate data: \(error)")
@@ -236,13 +302,6 @@ class CurrencyCalculatorModel: ObservableObject {
                 completion()
             }
         }.resume()
-    }
-    
-    // Вспомогательная функция для форматирования даты из ЦБР
-    private func parseDate(_ dateString: String) -> Date? {
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
-        return dateFormatter.date(from: dateString)
     }
     
     // Обновление метки последнего обновления
@@ -263,9 +322,10 @@ class CurrencyCalculatorModel: ObservableObject {
         
         // Выбираем источник курсов
         let ratesSource = useCBR ? cbrRates : exchangeRates
+        let fallbackSource = useCBR ? backupRatesRUB : backupRatesUSD
         
-        let fromRate = ratesSource[fromCurrency.code] ?? backupRates[fromCurrency.code] ?? 1.0
-        let toRate = ratesSource[toCurrency.code] ?? backupRates[toCurrency.code] ?? 1.0
+        let fromRate = ratesSource[fromCurrency.code] ?? fallbackSource[fromCurrency.code] ?? 1.0
+        let toRate = ratesSource[toCurrency.code] ?? fallbackSource[toCurrency.code] ?? 1.0
 
         if useCBR {
             if fromCurrency.code == "RUB" {
@@ -416,7 +476,7 @@ class CurrencyCalculatorModel: ObservableObject {
             if let formattedResult = formatter.string(from: NSNumber(value: result)) {
                 convertedValue = formattedResult
             } else {
-                convertedValue = "Ошибка"
+                convertedValue = AppL10n.text("error_generic")
             }
         } else {
             let cleanValue = displayValue
@@ -429,7 +489,7 @@ class CurrencyCalculatorModel: ObservableObject {
                 if let formattedResult = formatter.string(from: NSNumber(value: result)) {
                     convertedValue = formattedResult
                 } else {
-                    convertedValue = "Ошибка"
+                    convertedValue = AppL10n.text("error_generic")
                 }
             } else {
                 convertedValue = "0"
@@ -438,16 +498,22 @@ class CurrencyCalculatorModel: ObservableObject {
     }
     
     func getRateForCurrency(_ currency: Currency) -> String {
-        let ratesSource = currency.code == "RUB" ? cbrRates : exchangeRates
-        
-        guard let usdRate = exchangeRates["USD"],
-              let currencyRate = ratesSource[currency.code] else {
-            return "N/A"
-        }
-        
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 4
+        
+        if currency.code == "RUB" {
+            let rubPerUSD = cbrRates["USD"] ?? backupRatesRUB["USD"]
+            if let rubPerUSD, let formattedRate = formatter.string(from: NSNumber(value: rubPerUSD)) {
+                return "1 USD = \(formattedRate) RUB"
+            }
+            return "N/A"
+        }
+        
+        let usdRate = exchangeRates["USD"] ?? backupRatesUSD["USD"]
+        let currencyRate = exchangeRates[currency.code] ?? backupRatesUSD[currency.code]
+        
+        guard let usdRate, let currencyRate else { return "N/A" }
         
         let rate = currencyRate / usdRate
         if let formattedRate = formatter.string(from: NSNumber(value: rate)) {
@@ -524,13 +590,13 @@ struct ContentView: View {
                         CurrencyPickerView(
                             selectedCurrency: $model.fromCurrency,
                             availableCurrencies: model.availableCurrencies,
-                            title: "Валюты",
+                            title: AppL10n.text("currencies_title"),
                             onCurrencySelected: { newCurrency in
                                 model.fromCurrency = newCurrency
                                 model.updateConversionRate()
                             }
                         )
-                        .navigationBarTitle("Валюты", displayMode: .inline)
+                        .navigationBarTitle(AppL10n.text("currencies_title"), displayMode: .inline)
                         .environmentObject(model)
                     ) {
                         CurrencyView(currency: model.fromCurrency, amount: model.displayValue)
@@ -569,13 +635,13 @@ struct ContentView: View {
                         CurrencyPickerView(
                             selectedCurrency: $model.toCurrency,
                             availableCurrencies: model.availableCurrencies,
-                            title: "Валюты",
+                            title: AppL10n.text("currencies_title"),
                             onCurrencySelected: { newCurrency in
                                 model.toCurrency = newCurrency
                                 model.updateConversionRate()
                             }
                         )
-                        .navigationBarTitle("Валюты", displayMode: .inline)
+                        .navigationBarTitle(AppL10n.text("currencies_title"), displayMode: .inline)
                         .environmentObject(model)
                     ) {
                         CurrencyView(currency: model.toCurrency, amount: model.convertedValue)
@@ -753,7 +819,7 @@ struct ContentView: View {
                                 .foregroundColor(.white)
                         }
                         
-                        Text(model.fromCurrency.code == "RUB" || model.toCurrency.code == "RUB" ? "ЦБ РФ" : "ExchangeRate")
+                        Text(model.fromCurrency.code == "RUB" || model.toCurrency.code == "RUB" ? AppL10n.text("source_cbr") : AppL10n.text("source_exchange_rate"))
                             .font(.caption)
                             .foregroundColor(.yellow)
                             .padding(.horizontal, 8)
