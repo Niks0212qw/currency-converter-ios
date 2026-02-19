@@ -16,7 +16,31 @@ private let widgetBackupRatesUSD: [String: Double] = [
     "UZS": 12450.0,
     "BYN": 3.25,
     "THB": 35.8,
-    "UAH": 39.5
+    "UAH": 39.5,
+    "AMD": 395.0,
+    "GEL": 2.72,
+    "AUD": 1.54,
+    "CAD": 1.37,
+    "CHF": 0.88,
+    "KRW": 1345.0,
+    "NZD": 1.67,
+    "SEK": 10.6,
+    "NOK": 10.8,
+    "DKK": 6.92,
+    "PLN": 3.96,
+    "AZN": 1.70,
+    "DZD": 134.0,
+    "BRL": 5.45,
+    "INR": 86.5,
+    "KGS": 87.0,
+    "TJS": 10.9,
+    "RSD": 107.5,
+    "CZK": 23.6,
+    "RON": 4.60,
+    "MDL": 17.8,
+    "EGP": 49.2,
+    "QAR": 3.64,
+    "CUP": 24.0
 ]
 
 private func widgetBackupRatesRUB() -> [String: Double] {
@@ -70,6 +94,30 @@ struct CurrencyRate: Codable, Hashable {
         case "UAH": self.flagEmoji = "🇺🇦"
         case "GBP": self.flagEmoji = "🇬🇧"
         case "JPY": self.flagEmoji = "🇯🇵"
+        case "AMD": self.flagEmoji = "🇦🇲"
+        case "GEL": self.flagEmoji = "🇬🇪"
+        case "AUD": self.flagEmoji = "🇦🇺"
+        case "CAD": self.flagEmoji = "🇨🇦"
+        case "CHF": self.flagEmoji = "🇨🇭"
+        case "KRW": self.flagEmoji = "🇰🇷"
+        case "NZD": self.flagEmoji = "🇳🇿"
+        case "SEK": self.flagEmoji = "🇸🇪"
+        case "NOK": self.flagEmoji = "🇳🇴"
+        case "DKK": self.flagEmoji = "🇩🇰"
+        case "PLN": self.flagEmoji = "🇵🇱"
+        case "AZN": self.flagEmoji = "🇦🇿"
+        case "DZD": self.flagEmoji = "🇩🇿"
+        case "BRL": self.flagEmoji = "🇧🇷"
+        case "INR": self.flagEmoji = "🇮🇳"
+        case "KGS": self.flagEmoji = "🇰🇬"
+        case "TJS": self.flagEmoji = "🇹🇯"
+        case "RSD": self.flagEmoji = "🇷🇸"
+        case "CZK": self.flagEmoji = "🇨🇿"
+        case "RON": self.flagEmoji = "🇷🇴"
+        case "MDL": self.flagEmoji = "🇲🇩"
+        case "EGP": self.flagEmoji = "🇪🇬"
+        case "QAR": self.flagEmoji = "🇶🇦"
+        case "CUP": self.flagEmoji = "🇨🇺"
         default: self.flagEmoji = "🏳️"
         }
     }
@@ -145,9 +193,14 @@ struct Provider: AppIntentTimelineProvider {
     private func fetchEntry(for configuration: ConfigurationAppIntent) async -> CurrencyEntry {
         let base = configuration.baseCurrency
         let selectedCodes = normalizedCodes(from: configuration)
+        let selectedRateSource = effectiveRateSource(
+            from: configuration,
+            base: base,
+            selectedCodes: selectedCodes
+        )
         
-        let needsCBR = base == .rub || selectedCodes.contains(.rub)
-        let needsUSD = base != .rub && selectedCodes.contains(where: { $0 != .rub })
+        let needsCBR = selectedRateSource == .cbr
+        let needsUSD = selectedRateSource == .exchangeRate
         
         async let cbrTask: [String: Double]? = needsCBR ? fetchCBRRates() : nil
         async let usdTask: [String: Double]? = needsUSD ? fetchUSDRates() : nil
@@ -159,7 +212,8 @@ struct Provider: AppIntentTimelineProvider {
             baseCode: base.rawValue,
             selectedCodes: selectedCodes,
             cbrRates: cbrRates,
-            usdRates: usdRates
+            usdRates: usdRates,
+            source: selectedRateSource
         )
         
         let updatedAt = Date()
@@ -185,16 +239,32 @@ struct Provider: AppIntentTimelineProvider {
         return ordered
     }
     
+    private func effectiveRateSource(
+        from configuration: ConfigurationAppIntent,
+        base: CurrencyCode,
+        selectedCodes: [CurrencyCode]
+    ) -> WidgetRateSource {
+        let hasRublePair = base == .rub || selectedCodes.contains(.rub)
+        return hasRublePair ? configuration.rateSource : .exchangeRate
+    }
+    
     private func buildRates(
         baseCode: String,
         selectedCodes: [CurrencyCode],
         cbrRates: [String: Double],
-        usdRates: [String: Double]
+        usdRates: [String: Double],
+        source: WidgetRateSource
     ) -> [CurrencyRate] {
         var rates: [CurrencyRate] = []
         for code in selectedCodes {
             let target = code.rawValue
-            if let rate = computeRate(base: baseCode, target: target, cbrRates: cbrRates, usdRates: usdRates) {
+            if let rate = computeRate(
+                base: baseCode,
+                target: target,
+                cbrRates: cbrRates,
+                usdRates: usdRates,
+                source: source
+            ) {
                 rates.append(CurrencyRate(code: target, name: getCurrencyName(for: target), rate: rate))
             }
         }
@@ -205,17 +275,20 @@ struct Provider: AppIntentTimelineProvider {
         base: String,
         target: String,
         cbrRates: [String: Double],
-        usdRates: [String: Double]
+        usdRates: [String: Double],
+        source: WidgetRateSource
     ) -> Double? {
         guard base != target else { return nil }
         
-        if base == "RUB" {
-            return cbrRates[target]
-        }
-        
-        if target == "RUB" {
-            guard let rubPerBase = cbrRates[base], rubPerBase != 0 else { return nil }
-            return 1.0 / rubPerBase
+        if source == .cbr {
+            guard
+                let rubPerBase = cbrRates[base],
+                let rubPerTarget = cbrRates[target],
+                rubPerBase != 0
+            else {
+                return nil
+            }
+            return rubPerTarget / rubPerBase
         }
         
         guard let usdBase = usdRates[base], let usdTarget = usdRates[target], usdTarget != 0 else {
@@ -377,20 +450,9 @@ struct CurrencyWidgetSmallView: View {
                 }
             }
             .padding(.horizontal, 8)
-            .padding(.top, 2)
-            
-            Spacer()
-            
-            // Подвал
-            HStack {
-                Spacer()
-                Text("Converter · \(entry.baseCode)")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.secondary)
-                Spacer()
-            }
-            .padding(.bottom, 5)
+            .padding(.vertical, 6)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .edgesIgnoringSafeArea(.all)
     }
 }
@@ -422,20 +484,9 @@ struct CurrencyWidgetMediumView: View {
                     .padding(.horizontal, 8)
                 }
             }
-            .padding(.top, 2)
-            
-            Spacer()
-            
-            // Подвал
-            HStack {
-                Spacer()
-                Text("Converter · \(entry.baseCode)")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.secondary)
-                Spacer()
-            }
-            .padding(.bottom, 5)
+            .padding(.vertical, 6)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .edgesIgnoringSafeArea(.all)
     }
 }

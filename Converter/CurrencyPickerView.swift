@@ -1,50 +1,52 @@
 import SwiftUI
 
 struct CurrencyPickerView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
     @Binding var selectedCurrency: Currency
     @State private var searchText = ""
     @EnvironmentObject var model: CurrencyCalculatorModel
     var availableCurrencies: [Currency]
     var title: String
     var onCurrencySelected: (Currency) -> Void
-    
-    var filteredCurrencies: [Currency] {
+
+    private var filteredCurrencies: [Currency] {
         if searchText.isEmpty {
             return availableCurrencies
-        } else {
-            return availableCurrencies.filter {
-                $0.name.localizedCaseInsensitiveContains(searchText) ||
-                $0.code.localizedCaseInsensitiveContains(searchText)
-            }
+        }
+
+        return availableCurrencies.filter {
+            $0.name.localizedCaseInsensitiveContains(searchText) ||
+            $0.code.localizedCaseInsensitiveContains(searchText)
         }
     }
-    
+
     var body: some View {
         ZStack {
-            Color.black.edgesIgnoringSafeArea(.all)
-            
-            VStack(spacing: 0) {
-                // Строка поиска с улучшенным дизайном
+            PickerLiquidBackground()
+
+            VStack(spacing: 10) {
                 CustomSearchBar(text: $searchText)
-                    .padding(.vertical, 10)
-                
-                // Список валют с отображением курса
-                List {
-                    ForEach(filteredCurrencies) { currency in
-                        Button(action: {
-                            selectedCurrency = currency
-                            onCurrencySelected(currency)
-                            presentationMode.wrappedValue.dismiss()
-                        }) {
-                            CurrencyRowView(currency: currency)
+                    .padding(.top, 8)
+
+                ScrollView(showsIndicators: false) {
+                    LazyVStack(spacing: 8) {
+                        ForEach(filteredCurrencies, id: \.code) { currency in
+                            Button {
+                                selectedCurrency = currency
+                                onCurrencySelected(currency)
+                                dismiss()
+                            } label: {
+                                CurrencyRowView(currency: currency)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
-                    .listRowBackground(Color.black)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 12)
                 }
-                .listStyle(PlainListStyle())
             }
         }
+        .navigationBarTitleDisplayMode(.inline)
         .navigationBarTitle(title, displayMode: .inline)
     }
 }
@@ -52,45 +54,53 @@ struct CurrencyPickerView: View {
 struct CurrencyRowView: View {
     @EnvironmentObject var model: CurrencyCalculatorModel
     var currency: Currency
-    
-    var body: some View {
-        HStack {
-            // Эмодзи-флаг валюты
-            FlagCircleView(currency: currency)
-                .frame(width: 40, height: 40)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                // Название валюты
-                Text(currency.name)
-                    .foregroundColor(.white)
-                    .font(.body)
-                
-                // Курс валюты
-                Text(getCurrencyRate())
-                    .foregroundColor(.gray)
-                    .font(.caption)
-            }
-            .padding(.leading, 8)
-            
-            Spacer()
-            
-            // Код валюты
-            Text(currency.code)
-                .foregroundColor(.gray)
-                .font(.body)
-        }
-        .padding(.vertical, 8)
-    }
-    
-    // Получение курса валюты относительно USD
-    // Получение курса валюты относительно USD
-    private func getCurrencyRate() -> String {
+
+    private static let rateFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 4
+        return formatter
+    }()
+
+    var body: some View {
+        HStack(spacing: 12) {
+            CurrencyCompactFlagView(currency: currency)
+                .frame(width: 32, height: 32)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(currency.name)
+                    .font(.body)
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+
+                Text(getCurrencyRate())
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.7))
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Text(currency.code)
+                .foregroundColor(.white.opacity(0.75))
+                .font(.callout.weight(.semibold))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            Color.white.opacity(0.08),
+            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
+        )
+    }
+
+    private func getCurrencyRate() -> String {
+        let formatter = Self.rateFormatter
 
         if currency.code == "RUB" {
-            // Для рубля используем курсы ЦБ РФ, где USD хранит стоимость 1 USD в рублях
             guard let usdRate = model.cbrRates["USD"] else {
                 return AppL10n.text("no_data")
             }
@@ -98,7 +108,6 @@ struct CurrencyRowView: View {
                 return "1 USD = \(formattedRate) \(currency.code)"
             }
         } else {
-            // Для остальных валют используем ExchangeRate API
             guard let usdRate = model.exchangeRates["USD"],
                   let currencyRate = model.exchangeRates[currency.code] else {
                 return AppL10n.text("no_data")
@@ -108,42 +117,71 @@ struct CurrencyRowView: View {
                 return "1 USD = \(formattedRate) \(currency.code)"
             }
         }
+
         return AppL10n.text("no_data")
+    }
+}
+
+struct CurrencyCompactFlagView: View {
+    var currency: Currency
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.white.opacity(0.14))
+                .overlay(
+                    Circle()
+                        .strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+                )
+
+            Text(currency.flagEmoji)
+                .font(.system(size: 19))
+        }
+    }
+}
+
+struct PickerLiquidBackground: View {
+    var body: some View {
+        Color(red: 0.06, green: 0.09, blue: 0.16)
+            .ignoresSafeArea()
     }
 }
 
 struct CustomSearchBar: View {
     @Binding var text: String
-    
+
     var body: some View {
         HStack {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.gray)
-            
+                .foregroundColor(.white.opacity(0.6))
+
             TextField(AppL10n.text("search_placeholder"), text: $text)
                 .foregroundColor(.white)
-            
+
             if !text.isEmpty {
-                Button(action: {
+                Button {
                     text = ""
-                }) {
+                } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.white.opacity(0.6))
                 }
             }
         }
         .padding(10)
-        .background(Color.gray.opacity(0.2))
+        .background(Color.white.opacity(0.1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .stroke(Color.white.opacity(0.16), lineWidth: 1)
+        )
         .cornerRadius(10)
         .padding(.horizontal)
     }
 }
 
-// Расширение для добавления EnvironmentObject в превью
 struct CurrencyPickerView_Previews: PreviewProvider {
     static var previews: some View {
         let model = CurrencyCalculatorModel()
-        
+
         return NavigationView {
             CurrencyPickerView(
                 selectedCurrency: .constant(Currency(code: "USD", name: AppL10n.currencyName("USD"), flagName: "usa")),

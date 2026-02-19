@@ -67,7 +67,7 @@ cd currency-converter-ios
 
 2. **Open the project in Xcode:**
 ```bash
-open CurrencyConverter.xcodeproj
+open CoinVerter.xcodeproj
 ```
 
 3. **Configure signing:**

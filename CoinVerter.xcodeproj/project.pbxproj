@@ -26,14 +26,14 @@
 			containerPortal = E0FFA1282D8336B30029065F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = E0FFA12F2D8336B30029065F;
-			remoteInfo = Converter;
+			remoteInfo = CoinVerter;
 		};
 		E0FFA14B2D8336B50029065F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = E0FFA1282D8336B30029065F /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = E0FFA12F2D8336B30029065F;
-			remoteInfo = Converter;
+			remoteInfo = CoinVerter;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -55,7 +55,7 @@
 		E021BD562D847C6D0071F4AB /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		E021BD582D847C6D0071F4AB /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		E046384B2D84E29F00A7A9F6 /* CurrencyWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CurrencyWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		E0FFA1302D8336B30029065F /* Converter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Converter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E0FFA1302D8336B30029065F /* CoinVerter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CoinVerter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0FFA1402D8336B50029065F /* ConverterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ConverterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0FFA14A2D8336B50029065F /* ConverterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ConverterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -155,7 +155,7 @@
 		E0FFA1312D8336B30029065F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				E0FFA1302D8336B30029065F /* Converter.app */,
+				E0FFA1302D8336B30029065F /* CoinVerter.app */,
 				E0FFA1402D8336B50029065F /* ConverterTests.xctest */,
 				E0FFA14A2D8336B50029065F /* ConverterUITests.xctest */,
 				E046384B2D84E29F00A7A9F6 /* CurrencyWidgetExtension.appex */,
@@ -188,9 +188,9 @@
 			productReference = E046384B2D84E29F00A7A9F6 /* CurrencyWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		E0FFA12F2D8336B30029065F /* Converter */ = {
+		E0FFA12F2D8336B30029065F /* CoinVerter */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E0FFA1542D8336B50029065F /* Build configuration list for PBXNativeTarget "Converter" */;
+			buildConfigurationList = E0FFA1542D8336B50029065F /* Build configuration list for PBXNativeTarget "CoinVerter" */;
 			buildPhases = (
 				E0FFA12C2D8336B30029065F /* Sources */,
 				E0FFA12D2D8336B30029065F /* Frameworks */,
@@ -205,12 +205,12 @@
 			fileSystemSynchronizedGroups = (
 				E0FFA1322D8336B30029065F /* Converter */,
 			);
-			name = Converter;
+			name = CoinVerter;
 			packageProductDependencies = (
 				E0EAC2B72D83906D00E57A5A /* FlagKit */,
 			);
-			productName = Converter;
-			productReference = E0FFA1302D8336B30029065F /* Converter.app */;
+			productName = CoinVerter;
+			productReference = E0FFA1302D8336B30029065F /* CoinVerter.app */;
 			productType = "com.apple.product-type.application";
 		};
 		E0FFA13F2D8336B50029065F /* ConverterTests */ = {
@@ -267,7 +267,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 1620;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					E046384A2D84E29F00A7A9F6 = {
 						CreatedOnToolsVersion = 16.2;
@@ -285,7 +285,7 @@
 					};
 				};
 			};
-			buildConfigurationList = E0FFA12B2D8336B30029065F /* Build configuration list for PBXProject "Converter" */;
+			buildConfigurationList = E0FFA12B2D8336B30029065F /* Build configuration list for PBXProject "CoinVerter" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -303,7 +303,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				E0FFA12F2D8336B30029065F /* Converter */,
+				E0FFA12F2D8336B30029065F /* CoinVerter */,
 				E0FFA13F2D8336B50029065F /* ConverterTests */,
 				E0FFA1492D8336B50029065F /* ConverterUITests */,
 				E046384A2D84E29F00A7A9F6 /* CurrencyWidgetExtension */,
@@ -381,12 +381,12 @@
 		};
 		E0FFA1422D8336B50029065F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = E0FFA12F2D8336B30029065F /* Converter */;
+			target = E0FFA12F2D8336B30029065F /* CoinVerter */;
 			targetProxy = E0FFA1412D8336B50029065F /* PBXContainerItemProxy */;
 		};
 		E0FFA14C2D8336B50029065F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = E0FFA12F2D8336B30029065F /* Converter */;
+			target = E0FFA12F2D8336B30029065F /* CoinVerter */;
 			targetProxy = E0FFA14B2D8336B50029065F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -399,7 +399,6 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DQ4N63B88R;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CurrencyWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CurrencyWidget;
@@ -426,7 +425,6 @@
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DQ4N63B88R;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CurrencyWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CurrencyWidget;
@@ -451,6 +449,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -481,6 +480,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = DQ4N63B88R;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -504,6 +504,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -514,6 +515,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
@@ -544,6 +546,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = DQ4N63B88R;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -560,6 +563,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -574,14 +578,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Converter/Preview Content\"";
-				DEVELOPMENT_TEAM = DQ4N63B88R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = CoinVerter;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -596,7 +600,7 @@
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
@@ -609,14 +613,14 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Converter/Preview Content\"";
-				DEVELOPMENT_TEAM = DQ4N63B88R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = CoinVerter;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -631,7 +635,7 @@
 				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -641,7 +645,6 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DQ4N63B88R;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
@@ -650,7 +653,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Converter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Converter";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CoinVerter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CoinVerter";
 			};
 			name = Debug;
 		};
@@ -660,7 +663,6 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DQ4N63B88R;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
@@ -669,7 +671,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Converter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Converter";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/CoinVerter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/CoinVerter";
 			};
 			name = Release;
 		};
@@ -678,7 +680,6 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DQ4N63B88R;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = bonitalabs.ConverterUITests;
@@ -686,7 +687,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = Converter;
+				TEST_TARGET_NAME = CoinVerter;
 			};
 			name = Debug;
 		};
@@ -695,7 +696,6 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = DQ4N63B88R;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = bonitalabs.ConverterUITests;
@@ -703,7 +703,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = Converter;
+				TEST_TARGET_NAME = CoinVerter;
 			};
 			name = Release;
 		};
@@ -719,7 +719,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E0FFA12B2D8336B30029065F /* Build configuration list for PBXProject "Converter" */ = {
+		E0FFA12B2D8336B30029065F /* Build configuration list for PBXProject "CoinVerter" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E0FFA1522D8336B50029065F /* Debug */,
@@ -728,7 +728,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E0FFA1542D8336B50029065F /* Build configuration list for PBXNativeTarget "Converter" */ = {
+		E0FFA1542D8336B50029065F /* Build configuration list for PBXNativeTarget "CoinVerter" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				E0FFA1552D8336B50029065F /* Debug */,

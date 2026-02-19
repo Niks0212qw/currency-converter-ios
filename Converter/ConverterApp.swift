@@ -2,7 +2,7 @@ import SwiftUI
 import WidgetKit
 
 @main
-struct ConverterApp: App {
+struct CoinVerterApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
