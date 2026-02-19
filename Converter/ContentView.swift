@@ -1186,7 +1186,14 @@ struct ContentView: View {
                 imageButton("plus", tone: .operation, width: buttonW, height: buttonH, iconSize: iconSize, isActive: model.pendingOperation == .add, isOval: true) { model.performOperation(.add) }
             }
             HStack(spacing: spacing) {
-                textButton("0", width: buttonW * 2 + spacing, height: buttonH, fontSize: fontSize, isWide: true) { model.appendDigit("0") }
+                textButton(
+                    "0",
+                    width: buttonW * 2 + spacing,
+                    height: buttonH,
+                    fontSize: fontSize,
+                    isWide: true,
+                    wideLeadingPadding: buttonW * 0.44
+                ) { model.appendDigit("0") }
                 textButton(",", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDecimal() }
                 textButton("=", tone: .operation, width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.performEquals() }
             }
@@ -1203,13 +1210,14 @@ struct ContentView: View {
         fontSize: CGFloat = 34,
         isWide: Bool = false,
         isOval: Bool = false,
+        wideLeadingPadding: CGFloat = 34,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: fontSize, weight: .medium, design: .rounded))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: isWide ? .leading : .center)
-                .padding(.leading, isWide ? 34 : 0)
+                .padding(.leading, isWide ? wideLeadingPadding : 0)
         }
         .buttonStyle(LiquidCalculatorButtonStyle(tone: tone, isWide: isWide, isOval: isOval))
         .frame(width: width, height: height)
