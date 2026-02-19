@@ -910,20 +910,24 @@ struct ContentView: View {
     private var calculatorSection: some View {
         GeometryReader { geometry in
             let spacing = max(5.8, min(9.6, geometry.size.width * 0.021))
+            let useOvalButtons = isIPhoneSEFormFactor
             let availableWidth = geometry.size.width
             let buttonSize = (availableWidth - spacing * 3) / 4
+            let buttonHeight = buttonSize * phoneCalculatorButtonHeightRatio
+            let fontSize = max(isIPhoneSEFormFactor ? 26 : 30, buttonHeight * 0.42)
+            let iconSize = max(isIPhoneSEFormFactor ? 22 : 24, buttonHeight * 0.34)
 
             VStack(spacing: spacing) {
                 HStack(spacing: spacing) {
-                    textButton("C", tone: .utility, width: buttonSize, height: buttonSize) {
+                    textButton("C", tone: .utility, width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) {
                         model.clear()
                     }
 
-                    imageButton("delete.left", tone: .utility, width: buttonSize, height: buttonSize) {
+                    imageButton("delete.left", tone: .utility, width: buttonSize, height: buttonHeight, iconSize: iconSize, isOval: useOvalButtons) {
                         model.deleteLastDigit()
                     }
 
-                    textButton("%", tone: .utility, width: buttonSize, height: buttonSize) {
+                    textButton("%", tone: .utility, width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) {
                         model.performOperation(.percent)
                     }
 
@@ -931,71 +935,79 @@ struct ContentView: View {
                         "divide",
                         tone: .operation,
                         width: buttonSize,
-                        height: buttonSize,
-                        isActive: model.pendingOperation == .divide
+                        height: buttonHeight,
+                        iconSize: iconSize,
+                        isActive: model.pendingOperation == .divide,
+                        isOval: useOvalButtons
                     ) {
                         model.performOperation(.divide)
                     }
                 }
 
                 HStack(spacing: spacing) {
-                    textButton("7", width: buttonSize, height: buttonSize) { model.appendDigit("7") }
-                    textButton("8", width: buttonSize, height: buttonSize) { model.appendDigit("8") }
-                    textButton("9", width: buttonSize, height: buttonSize) { model.appendDigit("9") }
+                    textButton("7", width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) { model.appendDigit("7") }
+                    textButton("8", width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) { model.appendDigit("8") }
+                    textButton("9", width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) { model.appendDigit("9") }
 
                     imageButton(
                         "multiply",
                         tone: .operation,
                         width: buttonSize,
-                        height: buttonSize,
-                        isActive: model.pendingOperation == .multiply
+                        height: buttonHeight,
+                        iconSize: iconSize,
+                        isActive: model.pendingOperation == .multiply,
+                        isOval: useOvalButtons
                     ) {
                         model.performOperation(.multiply)
                     }
                 }
 
                 HStack(spacing: spacing) {
-                    textButton("4", width: buttonSize, height: buttonSize) { model.appendDigit("4") }
-                    textButton("5", width: buttonSize, height: buttonSize) { model.appendDigit("5") }
-                    textButton("6", width: buttonSize, height: buttonSize) { model.appendDigit("6") }
+                    textButton("4", width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) { model.appendDigit("4") }
+                    textButton("5", width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) { model.appendDigit("5") }
+                    textButton("6", width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) { model.appendDigit("6") }
 
                     imageButton(
                         "minus",
                         tone: .operation,
                         width: buttonSize,
-                        height: buttonSize,
-                        isActive: model.pendingOperation == .subtract
+                        height: buttonHeight,
+                        iconSize: iconSize,
+                        isActive: model.pendingOperation == .subtract,
+                        isOval: useOvalButtons
                     ) {
                         model.performOperation(.subtract)
                     }
                 }
 
                 HStack(spacing: spacing) {
-                    textButton("1", width: buttonSize, height: buttonSize) { model.appendDigit("1") }
-                    textButton("2", width: buttonSize, height: buttonSize) { model.appendDigit("2") }
-                    textButton("3", width: buttonSize, height: buttonSize) { model.appendDigit("3") }
+                    textButton("1", width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) { model.appendDigit("1") }
+                    textButton("2", width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) { model.appendDigit("2") }
+                    textButton("3", width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) { model.appendDigit("3") }
 
                     imageButton(
                         "plus",
                         tone: .operation,
                         width: buttonSize,
-                        height: buttonSize,
-                        isActive: model.pendingOperation == .add
+                        height: buttonHeight,
+                        iconSize: iconSize,
+                        isActive: model.pendingOperation == .add,
+                        isOval: useOvalButtons
                     ) {
                         model.performOperation(.add)
                     }
                 }
 
                 HStack(spacing: spacing) {
-                    textButton("0", width: buttonSize * 2 + spacing, height: buttonSize, isWide: true) {
+                    textButton("0", width: buttonSize * 2 + spacing, height: buttonHeight, fontSize: fontSize, isWide: true, isOval: useOvalButtons) {
                         model.appendDigit("0")
                     }
 
-                    textButton(",", width: buttonSize, height: buttonSize) {
+                    textButton(",", width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) {
                         model.appendDecimal()
                     }
 
-                    textButton("=", tone: .operation, width: buttonSize, height: buttonSize) {
+                    textButton("=", tone: .operation, width: buttonSize, height: buttonHeight, fontSize: fontSize, isOval: useOvalButtons) {
                         model.performEquals()
                     }
                 }
@@ -1004,6 +1016,7 @@ struct ContentView: View {
         }
         .frame(minHeight: calculatorMinHeight, maxHeight: .infinity)
         .padding(.top, calculatorTopPadding)
+        .offset(y: calculatorVerticalOffset)
     }
 
     private var footerSection: some View {
@@ -1270,6 +1283,20 @@ struct ContentView: View {
         !isPad && UIScreen.main.bounds.height > 900
     }
 
+    private var isIPhoneSEFormFactor: Bool {
+        guard !isPad else { return false }
+        #if targetEnvironment(simulator)
+        let simulatorName = ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] ?? ""
+        if simulatorName.localizedCaseInsensitiveContains("iphone se") {
+            return true
+        }
+        #endif
+        let screenBounds = UIScreen.main.bounds
+        let shortestSide = min(screenBounds.width, screenBounds.height)
+        let longestSide = max(screenBounds.width, screenBounds.height)
+        return shortestSide <= 375 && longestSide <= 667
+    }
+
     private var isIPhoneAir: Bool {
         guard !isPad else { return false }
         #if targetEnvironment(simulator)
@@ -1285,6 +1312,8 @@ struct ContentView: View {
         let basePadding: CGFloat
         if isPad {
             basePadding = 18
+        } else if isIPhoneSEFormFactor {
+            basePadding = 6
         } else if isCompactPhone {
             basePadding = 11
         } else if isTallPhone {
@@ -1300,23 +1329,40 @@ struct ContentView: View {
     }
 
     private var mainSectionSpacing: CGFloat {
+        if isIPhoneSEFormFactor { return 2 }
         if isCompactPhone { return 3 }
         if isTallPhone { return 5 }
         return 4
     }
     
     private var currencySectionSpacing: CGFloat {
-        let base = isCompactPhone ? -17.6 : -19.8
+        let base: CGFloat
+        if isIPhoneSEFormFactor {
+            base = -19.2
+        } else if isCompactPhone {
+            base = -17.6
+        } else {
+            base = -19.8
+        }
         return base * upperBlockScale
     }
 
     private var swapButtonDiameter: CGFloat {
-        let base: CGFloat = isCompactPhone ? 48 : 50
+        let base: CGFloat
+        if isIPhoneSEFormFactor {
+            base = 46
+        } else if isCompactPhone {
+            base = 48
+        } else {
+            base = 50
+        }
         return base * upperBlockScale
     }
 
     private var upperBlockScale: CGFloat {
-        calculatorButtonScale
+        let scale = calculatorButtonScale
+        if isIPhoneSEFormFactor { return scale * 0.9 }
+        return scale
     }
 
     private var calculatorButtonScale: CGFloat {
@@ -1329,40 +1375,58 @@ struct ContentView: View {
         let baselineButton = (baselineContentWidth - baselineSpacing * 3) / 4
 
         let ratio = button / baselineButton
-        return max(1, min(1.7, ratio))
+        let minScale: CGFloat = isIPhoneSEFormFactor ? 0.9 : 1
+        return max(minScale, min(1.7, ratio))
+    }
+
+    private var phoneCalculatorButtonHeightRatio: CGFloat {
+        if isIPhoneSEFormFactor { return 0.84 }
+        return 1
     }
 
     private var calculatorMinHeight: CGFloat {
         let contentWidth = estimatedContentWidth
         let spacing = max(5.8, min(9.6, contentWidth * 0.021))
         let button = (contentWidth - spacing * 3) / 4
-        let requiredHeight = button * 5 + spacing * 4
+        let buttonHeight = button * phoneCalculatorButtonHeightRatio
+        let requiredHeight = buttonHeight * 5 + spacing * 4
         if isPad { return requiredHeight }
+        if isIPhoneSEFormFactor { return requiredHeight - 14 }
         if isCompactPhone { return requiredHeight - 10 }
         if isTallPhone { return requiredHeight + 6 }
         return requiredHeight
     }
     
     private var footerIconDiameter: CGFloat {
-        isCompactPhone ? 36 : 38
+        if isIPhoneSEFormFactor { return 34 }
+        return isCompactPhone ? 36 : 38
     }
     
     private var footerVerticalPadding: CGFloat {
-        isCompactPhone ? 5.5 : 6.5
+        if isIPhoneSEFormFactor { return 5 }
+        return isCompactPhone ? 5.5 : 6.5
     }
 
     private var footerSourceControlWidth: CGFloat {
         if isPad { return 150 }
+        if isIPhoneSEFormFactor { return 110 }
         return isCompactPhone ? 124 : 132
     }
 
     private var footerVerticalOffset: CGFloat {
         if isTallPhone { return -2 }
+        if isIPhoneSEFormFactor { return -11 }
         return isCompactPhone ? 4.5 : 6
     }
 
     private var calculatorTopPadding: CGFloat {
-        isCompactPhone ? 6 : 7.5
+        if isIPhoneSEFormFactor { return 3.5 }
+        return isCompactPhone ? 6 : 7.5
+    }
+
+    private var calculatorVerticalOffset: CGFloat {
+        if isIPhoneSEFormFactor { return -6 }
+        return 0
     }
 }
 
