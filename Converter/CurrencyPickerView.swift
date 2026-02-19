@@ -9,6 +9,8 @@ struct CurrencyPickerView: View {
     var title: String
     var onCurrencySelected: (Currency) -> Void
 
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+
     private var filteredCurrencies: [Currency] {
         if searchText.isEmpty {
             return availableCurrencies
@@ -24,12 +26,12 @@ struct CurrencyPickerView: View {
         ZStack {
             PickerLiquidBackground()
 
-            VStack(spacing: 10) {
+            VStack(spacing: isPad ? 14 : 10) {
                 CustomSearchBar(text: $searchText)
                     .padding(.top, 8)
 
                 ScrollView(showsIndicators: false) {
-                    LazyVStack(spacing: 8) {
+                    LazyVStack(spacing: isPad ? 12 : 8) {
                         ForEach(filteredCurrencies, id: \.code) { currency in
                             Button {
                                 selectedCurrency = currency
@@ -41,10 +43,11 @@ struct CurrencyPickerView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.bottom, 12)
+                    .padding(.horizontal, isPad ? 20 : 12)
+                    .padding(.bottom, isPad ? 20 : 12)
                 }
             }
+            .frame(maxWidth: isPad ? 640 : .infinity)
         }
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarTitle(title, displayMode: .inline)
@@ -55,6 +58,8 @@ struct CurrencyRowView: View {
     @EnvironmentObject var model: CurrencyCalculatorModel
     var currency: Currency
 
+    private var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
+
     private static let rateFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -63,18 +68,18 @@ struct CurrencyRowView: View {
     }()
 
     var body: some View {
-        HStack(spacing: 12) {
-            CurrencyCompactFlagView(currency: currency)
-                .frame(width: 32, height: 32)
+        HStack(spacing: isPad ? 18 : 12) {
+            CurrencyCompactFlagView(currency: currency, emojiSize: isPad ? 34 : 24)
+                .frame(width: isPad ? 58 : 42, height: isPad ? 58 : 42)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(currency.name)
-                    .font(.body)
+                    .font(isPad ? .system(size: 20, weight: .regular) : .body)
                     .foregroundColor(.white)
                     .lineLimit(1)
 
                 Text(getCurrencyRate())
-                    .font(.caption)
+                    .font(isPad ? .system(size: 15, weight: .regular) : .caption)
                     .foregroundColor(.white.opacity(0.7))
                     .lineLimit(1)
             }
@@ -83,16 +88,16 @@ struct CurrencyRowView: View {
 
             Text(currency.code)
                 .foregroundColor(.white.opacity(0.75))
-                .font(.callout.weight(.semibold))
+                .font(isPad ? .system(size: 20, weight: .semibold) : .callout.weight(.semibold))
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, isPad ? 18 : 12)
+        .padding(.vertical, isPad ? 15 : 10)
         .background(
             Color.white.opacity(0.08),
-            in: RoundedRectangle(cornerRadius: 16, style: .continuous)
+            in: RoundedRectangle(cornerRadius: isPad ? 22 : 16, style: .continuous)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: isPad ? 22 : 16, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.14), lineWidth: 1)
         )
     }
@@ -124,6 +129,7 @@ struct CurrencyRowView: View {
 
 struct CurrencyCompactFlagView: View {
     var currency: Currency
+    var emojiSize: CGFloat = 19
 
     var body: some View {
         ZStack {
@@ -135,7 +141,7 @@ struct CurrencyCompactFlagView: View {
                 )
 
             Text(currency.flagEmoji)
-                .font(.system(size: 19))
+                .font(.system(size: emojiSize))
         }
     }
 }

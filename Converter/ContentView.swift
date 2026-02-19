@@ -491,10 +491,10 @@ class CurrencyCalculatorModel: ObservableObject {
     
     func appendDecimal() {
         if isPerformingOperation {
-            displayValue = "0."
+            displayValue = "0,"
             isPerformingOperation = false
-        } else if !displayValue.contains(".") {
-            displayValue += "."
+        } else if !displayValue.contains(",") {
+            displayValue += ","
         }
         convert()
     }
@@ -517,7 +517,7 @@ class CurrencyCalculatorModel: ObservableObject {
     }
     
     func performOperation(_ operation: CalculatorOperation) {
-        if let currentValue = Double(displayValue.replacingOccurrences(of: ",", with: ".")) {
+        if let currentValue = Double(displayValue.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: ",", with: ".")) {
             if operation == .percent {
                 let percentResult = currentValue / 100.0
                 displayValue = formatDisplayValue(percentResult)
@@ -543,7 +543,7 @@ class CurrencyCalculatorModel: ObservableObject {
     
     func performEquals() {
         if pendingOperation != .none {
-            if let currentValue = Double(displayValue.replacingOccurrences(of: ",", with: ".")) {
+            if let currentValue = Double(displayValue.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: ",", with: ".")) {
                 let result = calculateResult(storedValue, currentValue)
                 calculatorHistory = "\(formatDisplayValue(storedValue)) \(pendingOperation.symbol) \(formatDisplayValue(currentValue)) = \(formatDisplayValue(result))"
                 displayValue = formatDisplayValue(result)
@@ -574,12 +574,14 @@ class CurrencyCalculatorModel: ObservableObject {
     private func formatDisplayValue(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
+        formatter.decimalSeparator = ","
+        formatter.groupingSeparator = " "
         formatter.maximumFractionDigits = 10
-        
+
         if value.truncatingRemainder(dividingBy: 1) == 0 {
             formatter.maximumFractionDigits = 0
         }
-        
+
         return formatter.string(from: NSNumber(value: value)) ?? "0"
     }
     
@@ -670,6 +672,7 @@ struct LiquidCalculatorButtonStyle: ButtonStyle {
     var tone: CalculatorButtonTone
     var isWide: Bool = false
     var isActive: Bool = false
+    var isOval: Bool = false
 
     func makeBody(configuration: Configuration) -> some View {
         let pressed = configuration.isPressed
@@ -678,9 +681,8 @@ struct LiquidCalculatorButtonStyle: ButtonStyle {
             .font(.system(size: 34, weight: .medium, design: .rounded))
             .foregroundStyle(foregroundColor)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: isWide ? .leading : .center)
-            .padding(.leading, isWide ? 28 : 0)
             .background {
-                if isWide {
+                if isWide || isOval {
                     let shape = Capsule()
                     shape
                         .fill(buttonFill(pressed: pressed))
@@ -765,6 +767,10 @@ struct LiquidCurrencyCard: View {
         baseHeightScale * scale
     }
 
+    private var isPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8 * heightScale) {
             HStack(spacing: 15 * heightScale) {
@@ -777,7 +783,9 @@ struct LiquidCurrencyCard: View {
                         .foregroundStyle(.white.opacity(0.95))
 
                     Text(currency.name)
-                        .font(.caption2)
+                        .font(isPad
+                            ? .system(size: 14 * heightScale, weight: .regular)
+                            : .caption2)
                         .foregroundStyle(.white.opacity(0.65))
                         .lineLimit(1)
                 }
@@ -793,11 +801,12 @@ struct LiquidCurrencyCard: View {
                 Spacer()
 
                 Text(amount)
-                    .font(.system(size: (isPrimary ? 93 : 82) * heightScale, weight: .regular, design: .rounded))
+                    .font(.system(size: (isPrimary ? 93 : 82) * heightScale * (isPad ? 0.5 : 1.0), weight: .regular, design: .rounded))
                     .foregroundStyle(.white.opacity(0.98))
                     .lineLimit(1)
                     .minimumScaleFactor(0.4)
             }
+            .frame(height: isPad ? (isPrimary ? 93 : 82) * heightScale : nil)
         }
         .padding(15 * heightScale)
         .background(
@@ -816,6 +825,14 @@ struct ContentView: View {
     @StateObject private var model = CurrencyCalculatorModel()
 
     var body: some View {
+        if isPad {
+            iPadBody
+        } else {
+            iPhoneBody
+        }
+    }
+
+    private var iPhoneBody: some View {
         NavigationStack {
             ZStack {
                 liquidBackground
@@ -866,7 +883,7 @@ struct ContentView: View {
         }
     }
 
-    private func currencyLink(for selection: Binding<Currency>, amount: String, isPrimary: Bool) -> some View {
+    private func currencyLink(for selection: Binding<Currency>, amount: String, isPrimary: Bool, scale: CGFloat? = nil) -> some View {
         NavigationLink(
             destination: CurrencyPickerView(
                 selectedCurrency: selection,
@@ -884,7 +901,7 @@ struct ContentView: View {
                 currency: selection.wrappedValue,
                 amount: amount,
                 isPrimary: isPrimary,
-                scale: upperBlockScale
+                scale: scale ?? upperBlockScale
             )
         }
         .buttonStyle(.plain)
@@ -974,7 +991,7 @@ struct ContentView: View {
                         model.appendDigit("0")
                     }
 
-                    textButton(".", width: buttonSize, height: buttonSize) {
+                    textButton(",", width: buttonSize, height: buttonSize) {
                         model.appendDecimal()
                     }
 
@@ -1067,22 +1084,134 @@ struct ContentView: View {
         .offset(y: footerVerticalOffset)
     }
 
+    // MARK: - iPad Layout
+
+    private var iPadBody: some View {
+        NavigationStack {
+            ZStack {
+                liquidBackground
+                GeometryReader { geo in
+                    let colW: CGFloat = min(geo.size.width * 0.80, 860)
+                    let contentW: CGFloat = max(320, colW - 32)
+                    let calcSpacing: CGFloat = max(5.8, min(9.6, contentW * 0.021))
+                    let buttonW: CGFloat = (contentW - calcSpacing * 3) / 4
+                    let buttonH: CGFloat = buttonW * 0.65
+                    let calcH: CGFloat = 7.5 + buttonH * 5 + calcSpacing * 4
+                    let topPad: CGFloat = 18
+                    let footerH: CGFloat = 54
+                    let sectionGap: CGFloat = 4
+                    let availForCards: CGFloat = geo.size.height - topPad - calcH - footerH - sectionGap * 2
+                    let cardScale: CGFloat = max(0.7, min(2.2, availForCards / 331.5))
+
+                    VStack(spacing: sectionGap) {
+                        iPadCurrencySection(scale: cardScale)
+                        iPadCalculatorSection(contentW: contentW)
+                            .frame(height: calcH)
+                        footerSection
+                            .frame(height: footerH)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, topPad)
+                    .frame(maxWidth: colW)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                }
+            }
+            .toolbar(.hidden, for: .navigationBar)
+        }
+        .preferredColorScheme(.dark)
+    }
+
+    @ViewBuilder
+    private func iPadCurrencySection(scale: CGFloat) -> some View {
+        VStack(spacing: -19.8 * scale) {
+            currencyLink(
+                for: $model.fromCurrency,
+                amount: model.displayValue,
+                isPrimary: true,
+                scale: scale
+            )
+
+            HStack {
+                Spacer()
+                Button { model.swapCurrencies() } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                        .font(.system(size: 36, weight: .bold))
+                        .foregroundStyle(Color(red: 1.0, green: 0.74, blue: 0.28))
+                }
+                .buttonStyle(LiquidIconButtonStyle(diameter: scale * 50))
+                Spacer()
+            }
+            .zIndex(1)
+
+            currencyLink(
+                for: $model.toCurrency,
+                amount: model.convertedValue,
+                isPrimary: false,
+                scale: scale
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func iPadCalculatorSection(contentW: CGFloat) -> some View {
+        let spacing: CGFloat = max(5.8, min(9.6, contentW * 0.021))
+        let buttonW: CGFloat = (contentW - spacing * 3) / 4
+        let buttonH: CGFloat = buttonW * 0.65
+        let fontSize: CGFloat = max(22, buttonH * 0.32)
+        let iconSize: CGFloat = max(18, buttonH * 0.26)
+
+        VStack(spacing: spacing) {
+            HStack(spacing: spacing) {
+                textButton("C", tone: .utility, width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.clear() }
+                imageButton("delete.left", tone: .utility, width: buttonW, height: buttonH, iconSize: iconSize, isOval: true) { model.deleteLastDigit() }
+                textButton("%", tone: .utility, width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.performOperation(.percent) }
+                imageButton("divide", tone: .operation, width: buttonW, height: buttonH, iconSize: iconSize, isActive: model.pendingOperation == .divide, isOval: true) { model.performOperation(.divide) }
+            }
+            HStack(spacing: spacing) {
+                textButton("7", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDigit("7") }
+                textButton("8", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDigit("8") }
+                textButton("9", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDigit("9") }
+                imageButton("multiply", tone: .operation, width: buttonW, height: buttonH, iconSize: iconSize, isActive: model.pendingOperation == .multiply, isOval: true) { model.performOperation(.multiply) }
+            }
+            HStack(spacing: spacing) {
+                textButton("4", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDigit("4") }
+                textButton("5", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDigit("5") }
+                textButton("6", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDigit("6") }
+                imageButton("minus", tone: .operation, width: buttonW, height: buttonH, iconSize: iconSize, isActive: model.pendingOperation == .subtract, isOval: true) { model.performOperation(.subtract) }
+            }
+            HStack(spacing: spacing) {
+                textButton("1", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDigit("1") }
+                textButton("2", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDigit("2") }
+                textButton("3", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDigit("3") }
+                imageButton("plus", tone: .operation, width: buttonW, height: buttonH, iconSize: iconSize, isActive: model.pendingOperation == .add, isOval: true) { model.performOperation(.add) }
+            }
+            HStack(spacing: spacing) {
+                textButton("0", width: buttonW * 2 + spacing, height: buttonH, fontSize: fontSize, isWide: true) { model.appendDigit("0") }
+                textButton(",", width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.appendDecimal() }
+                textButton("=", tone: .operation, width: buttonW, height: buttonH, fontSize: fontSize, isOval: true) { model.performEquals() }
+            }
+        }
+        .padding(.top, 7.5)
+    }
+
     @ViewBuilder
     private func textButton(
         _ title: String,
         tone: CalculatorButtonTone = .digit,
         width: CGFloat,
         height: CGFloat,
+        fontSize: CGFloat = 34,
         isWide: Bool = false,
+        isOval: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 34, weight: .medium, design: .rounded))
+                .font(.system(size: fontSize, weight: .medium, design: .rounded))
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: isWide ? .leading : .center)
-                .padding(.leading, isWide ? 28 : 0)
+                .padding(.leading, isWide ? 34 : 0)
         }
-        .buttonStyle(LiquidCalculatorButtonStyle(tone: tone, isWide: isWide))
+        .buttonStyle(LiquidCalculatorButtonStyle(tone: tone, isWide: isWide, isOval: isOval))
         .frame(width: width, height: height)
     }
 
@@ -1092,15 +1221,17 @@ struct ContentView: View {
         tone: CalculatorButtonTone = .digit,
         width: CGFloat,
         height: CGFloat,
+        iconSize: CGFloat = 28,
         isWide: Bool = false,
         isActive: Bool = false,
+        isOval: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 28, weight: .medium, design: .rounded))
+                .font(.system(size: iconSize, weight: .medium, design: .rounded))
         }
-        .buttonStyle(LiquidCalculatorButtonStyle(tone: tone, isWide: isWide, isActive: isActive))
+        .buttonStyle(LiquidCalculatorButtonStyle(tone: tone, isWide: isWide, isActive: isActive, isOval: isOval))
         .frame(width: width, height: height)
     }
 
@@ -1109,12 +1240,17 @@ struct ContentView: View {
     }
 
     private var contentColumnMaxWidth: CGFloat {
-        isPad ? 620 : .infinity
+        if isPad {
+            let screenWidth = UIScreen.main.bounds.width
+            // Адаптивная ширина колонки: iPad mini (~460pt) → iPad Pro 13" (580pt)
+            return min(screenWidth * 0.60, 580)
+        }
+        return .infinity
     }
 
     private var estimatedContentWidth: CGFloat {
         let screenWidth = UIScreen.main.bounds.width
-        let cappedWidth = isPad ? min(620, screenWidth) : screenWidth
+        let cappedWidth = isPad ? min(contentColumnMaxWidth, screenWidth) : screenWidth
         return max(320, cappedWidth - 32)
     }
 
@@ -1126,11 +1262,29 @@ struct ContentView: View {
         !isPad && UIScreen.main.bounds.height > 900
     }
 
+    private var isIPhoneAir: Bool {
+        guard !isPad else { return false }
+        #if targetEnvironment(simulator)
+        let simulatorName = ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] ?? ""
+        if simulatorName.localizedCaseInsensitiveContains("iphone air") {
+            return true
+        }
+        #endif
+        return UIDevice.current.name.localizedCaseInsensitiveContains("iphone air")
+    }
+
     private var topContentPadding: CGFloat {
-        if isPad { return 18 }
-        if isCompactPhone { return 11 }
-        if isTallPhone { return 15 }
-        return 13
+        let basePadding: CGFloat
+        if isPad {
+            basePadding = 18
+        } else if isCompactPhone {
+            basePadding = 11
+        } else if isTallPhone {
+            basePadding = 15
+        } else {
+            basePadding = 13
+        }
+        return isIPhoneAir ? basePadding * 1.15 : basePadding
     }
 
     private var bottomContentPadding: CGFloat {
@@ -1195,7 +1349,8 @@ struct ContentView: View {
     }
 
     private var footerVerticalOffset: CGFloat {
-        isCompactPhone ? 4.5 : 6
+        if isTallPhone { return -2 }
+        return isCompactPhone ? 4.5 : 6
     }
 
     private var calculatorTopPadding: CGFloat {
