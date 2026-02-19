@@ -839,6 +839,7 @@ struct ContentView: View {
 
                 VStack(spacing: mainSectionSpacing) {
                     currencySection
+                        .offset(y: currencySectionVerticalOffset)
                     calculatorSection
                         .layoutPriority(1)
                     footerSection
@@ -1077,7 +1078,7 @@ struct ContentView: View {
                     .foregroundStyle(.white.opacity(0.82))
 
                 Text(model.calculationHistory)
-                    .font(.title3.weight(.regular))
+                    .font(.caption)
                     .foregroundStyle(.white.opacity(0.9))
                     .lineLimit(1)
                     .minimumScaleFactor(0.65)
@@ -1426,6 +1427,11 @@ struct ContentView: View {
 
     private var calculatorVerticalOffset: CGFloat {
         if isIPhoneSEFormFactor { return -6 }
+        return 0
+    }
+
+    private var currencySectionVerticalOffset: CGFloat {
+        if isIPhoneAir { return 8 }
         return 0
     }
 }
