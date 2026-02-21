@@ -696,7 +696,7 @@ struct LiquidCalculatorButtonStyle: ButtonStyle {
             }
             .shadow(color: shadowColor(pressed: pressed), radius: pressed ? 0.5 : 1.5, x: 0, y: pressed ? 0.5 : 1)
             .scaleEffect(pressed ? 0.95 : 1)
-            .offset(y: pressed ? 1.8 : 0)
+            .offset(y: pressed ? 2.6 : 0)
             .animation(.easeOut(duration: 0.12), value: pressed)
     }
 
@@ -1298,6 +1298,24 @@ struct ContentView: View {
         return shortestSide <= 375 && longestSide <= 667
     }
 
+    private static let iPhoneAirModelIdentifiers: Set<String> = [
+        "iPhone18,4"
+    ]
+
+    private var deviceModelIdentifier: String {
+        #if targetEnvironment(simulator)
+        return ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] ?? ""
+        #else
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        return withUnsafePointer(to: &systemInfo.machine) { machinePtr in
+            machinePtr.withMemoryRebound(to: CChar.self, capacity: 1) { cStringPtr in
+                String(cString: cStringPtr)
+            }
+        }
+        #endif
+    }
+
     private var isIPhoneAir: Bool {
         guard !isPad else { return false }
         #if targetEnvironment(simulator)
@@ -1306,7 +1324,7 @@ struct ContentView: View {
             return true
         }
         #endif
-        return UIDevice.current.name.localizedCaseInsensitiveContains("iphone air")
+        return Self.iPhoneAirModelIdentifiers.contains(deviceModelIdentifier)
     }
 
     private var topContentPadding: CGFloat {
@@ -1431,7 +1449,7 @@ struct ContentView: View {
     }
 
     private var currencySectionVerticalOffset: CGFloat {
-        if isIPhoneAir { return 8 }
+        if isIPhoneAir { return 9 }
         return 0
     }
 }

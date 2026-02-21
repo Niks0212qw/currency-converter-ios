@@ -186,7 +186,7 @@ struct Provider: AppIntentTimelineProvider {
     
     func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<CurrencyEntry> {
         let entry = await fetchEntry(for: configuration)
-        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 3, to: Date()) ?? Date()
+        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
         return Timeline(entries: [entry], policy: .after(nextUpdate))
     }
     
