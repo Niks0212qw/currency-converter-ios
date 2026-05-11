@@ -4,6 +4,15 @@
 "error_generic" = "Error";
 "source_cbr" = "CBR";
 "source_exchange_rate" = "ExchangeRate";
+"source_custom" = "Custom";
+"rates_using_backup" = "Backup rate";
+"rates_updated" = "Rates updated";
+"custom_rate_title" = "Custom Rate";
+"custom_rate_pair" = "1 %@ = ? %@";
+"custom_rate_hint" = "Enter the rate for the current currency pair.";
+"custom_rate_error" = "Enter a number greater than zero.";
+"custom_rate_cancel" = "Cancel";
+"custom_rate_save" = "Save";
 
 "currency.rub" = "Russian Ruble";
 "currency.usd" = "US Dollar";
@@ -42,3 +51,8 @@
 "currency.egp" = "Egyptian Pound";
 "currency.qar" = "Qatari Riyal";
 "currency.cup" = "Cuban Peso";
+
+"review_prompt_title" = "Enjoying CoinVerter?";
+"review_prompt_message" = "If the app is useful, please rate it in the App Store.";
+"review_prompt_rate" = "Rate App";
+"review_prompt_later" = "Not Now";

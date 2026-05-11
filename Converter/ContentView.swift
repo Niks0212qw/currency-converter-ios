@@ -1,4 +1,7 @@
 import SwiftUI
+import StoreKit
+import UIKit
+import os
 
 // Структура для декодирования ответа API Центрального Банка России
 struct CBRResponse: Decodable {
@@ -102,6 +105,7 @@ enum CalculatorOperation {
 enum RateSource: String, CaseIterable, Hashable {
     case cbr
     case exchangeRate
+    case custom
 
     var localizationKey: String {
         switch self {
@@ -109,11 +113,15 @@ enum RateSource: String, CaseIterable, Hashable {
             return "source_cbr"
         case .exchangeRate:
             return "source_exchange_rate"
+        case .custom:
+            return "source_custom"
         }
     }
 }
 
 class CurrencyCalculatorModel: ObservableObject {
+    private static let ratesLogger = Logger(subsystem: "com.nikitakrivonosov.ConverteriOS", category: "Rates")
+
     @Published var displayValue: String = "0"
     @Published var fromCurrency: Currency {
         didSet {
@@ -130,6 +138,7 @@ class CurrencyCalculatorModel: ObservableObject {
     @Published var calculationHistory: String = ""
     @Published var conversionRate: Double = 0.012
     @Published var lastUpdated: String = ""
+    @Published var isUsingFallbackRate: Bool = true
     @Published var isLoading: Bool = false
     @Published var convertedValue: String = "0"
     @Published var showFromCurrencyPicker = false
@@ -141,12 +150,14 @@ class CurrencyCalculatorModel: ObservableObject {
     @Published var isPerformingOperation: Bool = false
     @Published var showCalculatorHistory: Bool = false
     @Published var calculatorHistory: String = ""
+    @Published var showReviewPrompt: Bool = false
     
     // Словарь для хранения курсов валют из ЦБ РФ
     @Published var cbrRates: [String: Double] = [:]
     // Словарь для хранения курсов валют из ExchangeRate API
     @Published var exchangeRates: [String: Double] = [:]
     @Published var activeRateSource: RateSource = .exchangeRate
+    @Published private(set) var customRates: [String: Double] = [:]
     
     let availableCurrencies: [Currency] = [
         Currency(code: "RUB", name: AppL10n.currencyName("RUB"), flagName: "russia"),
@@ -235,9 +246,33 @@ class CurrencyCalculatorModel: ObservableObject {
     private let fromCurrencyCodeKey = "CurrencyCalculator.selectedFromCurrencyCode"
     private let toCurrencyCodeKey = "CurrencyCalculator.selectedToCurrencyCode"
     private let rateSourceKey = "CurrencyCalculator.selectedRateSource"
+    private let customRatesKey = "CurrencyCalculator.customRates"
+    private let installDateKey = "CurrencyCalculator.installDate"
+    private let reviewSuccessfulActionsKey = "CurrencyCalculator.review.successfulActions"
+    private let reviewLastActionDateKey = "CurrencyCalculator.review.lastActionDate"
+    private let reviewLastPromptDateKey = "CurrencyCalculator.review.lastPromptDate"
+    private let reviewLastDeferredDateKey = "CurrencyCalculator.review.lastDeferredDate"
+    private let reviewLastPromptVersionKey = "CurrencyCalculator.review.lastPromptVersion"
+
+    private let minimumInstallAge: TimeInterval = 7 * 24 * 60 * 60
+    private let minimumSuccessfulActionsForPrompt = 12
+    private let reviewPromptCooldown: TimeInterval = 120 * 24 * 60 * 60
+    private let reviewDeferCooldown: TimeInterval = 30 * 24 * 60 * 60
+    private let successfulActionThrottle: TimeInterval = 30
+    private let rateURLSession: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.waitsForConnectivity = true
+        configuration.timeoutIntervalForRequest = 15
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: configuration)
+    }()
+
+    private var cbrLastUpdatedDate: Date?
+    private var exchangeRateLastUpdatedDate: Date?
+    private var customRateLastUpdatedDate: Date?
     
     init() {
-        self.backupRatesRUB = CurrencyCalculatorModel.makeRUBBackup(from: backupRatesUSD)
+         self.backupRatesRUB = CurrencyCalculatorModel.makeRUBBackup(from: backupRatesUSD)
         
         let defaultFrom = availableCurrencies.first(where: { $0.code == "USD" }) ?? availableCurrencies[1]
         let defaultTo = availableCurrencies.first(where: { $0.code == "RUB" }) ?? availableCurrencies[0]
@@ -245,21 +280,34 @@ class CurrencyCalculatorModel: ObservableObject {
         let savedFromCode = defaults.string(forKey: fromCurrencyCodeKey)
         let savedToCode = defaults.string(forKey: toCurrencyCodeKey)
         
-        self.fromCurrency = availableCurrencies.first(where: { $0.code == savedFromCode }) ?? defaultFrom
-        self.toCurrency = availableCurrencies.first(where: { $0.code == savedToCode }) ?? defaultTo
+        // Загружаем источник курсов ДО установки валют,
+        // т.к. didSet на fromCurrency/toCurrency вызывает persistSelectedCurrencies(),
+        // которая перезаписала бы сохранённый источник дефолтным .exchangeRate
         if let savedSource = defaults.string(forKey: rateSourceKey), let source = RateSource(rawValue: savedSource) {
             self.activeRateSource = source
         }
+
+        if let savedCustomRates = defaults.dictionary(forKey: customRatesKey) {
+            self.customRates = savedCustomRates.compactMapValues { value in
+                if let number = value as? NSNumber {
+                    return number.doubleValue
+                }
+                return value as? Double
+            }
+        }
+        
+        self.fromCurrency = availableCurrencies.first(where: { $0.code == savedFromCode }) ?? defaultFrom
+        self.toCurrency = availableCurrencies.first(where: { $0.code == savedToCode }) ?? defaultTo
         
         if self.fromCurrency.code == self.toCurrency.code {
             self.toCurrency = defaultTo.code == self.fromCurrency.code
                 ? (availableCurrencies.first(where: { $0.code != self.fromCurrency.code }) ?? defaultTo)
                 : defaultTo
         }
+
+        ensureInstallDate()
         
-        // Используем резервные курсы при инициализации
-        self.exchangeRates = backupRatesUSD
-        self.cbrRates = backupRatesRUB
+        self.lastUpdated = AppL10n.text("rates_using_backup")
         syncRateSourceAvailability()
         persistSelectedCurrencies()
         updateConversionRate()
@@ -290,12 +338,24 @@ class CurrencyCalculatorModel: ObservableObject {
         defaults.synchronize()
     }
 
+    private func persistCustomRates() {
+        defaults.set(customRates, forKey: customRatesKey)
+        defaults.synchronize()
+    }
+
+    private func ensureInstallDate() {
+        if defaults.object(forKey: installDateKey) == nil {
+            defaults.set(Date(), forKey: installDateKey)
+        }
+    }
+
     var availableRateSources: [RateSource] {
-        hasRublePair ? [.cbr, .exchangeRate] : [.exchangeRate]
+        hasRublePair ? [.cbr, .exchangeRate, .custom] : [.exchangeRate, .custom]
     }
 
     func setRateSource(_ source: RateSource) {
         guard availableRateSources.contains(source) else { return }
+        guard source != .custom || customRateForCurrentPair != nil else { return }
         activeRateSource = source
         persistSelectedCurrencies()
         updateConversionRate()
@@ -306,15 +366,74 @@ class CurrencyCalculatorModel: ObservableObject {
     }
 
     private var effectiveRateSource: RateSource {
-        availableRateSources.contains(activeRateSource) ? activeRateSource : .exchangeRate
+        guard availableRateSources.contains(activeRateSource) else { return .exchangeRate }
+        guard activeRateSource != .custom || customRateForCurrentPair != nil else { return .exchangeRate }
+        return activeRateSource
     }
 
     func syncRateSourceAvailability() {
         let available = availableRateSources
         if !available.contains(activeRateSource) {
             activeRateSource = .exchangeRate
+        } else if activeRateSource == .custom && customRateForCurrentPair == nil {
+            activeRateSource = .exchangeRate
         }
         persistSelectedCurrencies()
+    }
+
+    private var currentPairKey: String {
+        "\(fromCurrency.code)_\(toCurrency.code)"
+    }
+
+    private var inversePairKey: String {
+        "\(toCurrency.code)_\(fromCurrency.code)"
+    }
+
+    private var customRateForCurrentPair: Double? {
+        if let directRate = customRates[currentPairKey] {
+            return directRate
+        }
+
+        guard let inverseRate = customRates[inversePairKey], inverseRate != 0 else {
+            return nil
+        }
+
+        return 1 / inverseRate
+    }
+
+    func customRateDraftText() -> String {
+        guard let rate = customRateForCurrentPair else { return "" }
+
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 8
+        return formatter.string(from: NSNumber(value: rate)) ?? ""
+    }
+
+    func saveCustomRate(_ input: String) -> Bool {
+        guard let rate = parseCustomRate(input) else { return false }
+
+        customRates[currentPairKey] = rate
+        persistCustomRates()
+        activeRateSource = .custom
+        customRateLastUpdatedDate = Date()
+        persistSelectedCurrencies()
+        updateConversionRate()
+        return true
+    }
+
+    private func parseCustomRate(_ input: String) -> Double? {
+        let normalized = input
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "\u{00a0}", with: "")
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: ",", with: ".")
+
+        guard let rate = Double(normalized), rate.isFinite, rate > 0 else {
+            return nil
+        }
+
+        return rate
     }
     
     private func scheduleAutoRefresh() {
@@ -326,6 +445,7 @@ class CurrencyCalculatorModel: ObservableObject {
     
     // Функция для получения курсов из обоих источников с использованием DispatchGroup
     func fetchAllExchangeRates() {
+        Self.ratesLogger.info("Starting exchange rate refresh")
         isLoading = true
         let group = DispatchGroup()
         
@@ -342,6 +462,7 @@ class CurrencyCalculatorModel: ObservableObject {
         group.notify(queue: .main) {
             self.updateConversionRate()
             self.isLoading = false
+            Self.ratesLogger.info("Finished exchange rate refresh. Source: \(self.activeRateSource.rawValue, privacy: .public), fallback: \(self.isUsingFallbackRate, privacy: .public), rate: \(self.conversionRate, privacy: .public)")
         }
     }
     
@@ -352,18 +473,18 @@ class CurrencyCalculatorModel: ObservableObject {
             return
         }
         
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+        rateURLSession.dataTask(with: url) { [weak self] data, response, error in
             guard let self = self else { completion(); return }
             
             DispatchQueue.main.async {
                 guard error == nil, let data = data else {
-                    print("CBR request error: \(String(describing: error))")
+                    Self.ratesLogger.error("CBR request failed: \(String(describing: error), privacy: .public)")
                     completion()
                     return
                 }
                 
                 if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-                    print("CBR request HTTP error: \(http.statusCode)")
+                    Self.ratesLogger.error("CBR HTTP error: \(http.statusCode, privacy: .public)")
                     completion()
                     return
                 }
@@ -378,10 +499,10 @@ class CurrencyCalculatorModel: ObservableObject {
                     }
                     
                     self.cbrRates = rates
-                    self.updateLastUpdated()
-                    print("CBR rates updated successfully.")
+                    self.cbrLastUpdatedDate = self.parseCBRDate(cbrResponse.Date) ?? Date()
+                    Self.ratesLogger.info("CBR rates updated. USD/RUB: \(rates["USD"] ?? 0, privacy: .public), date: \(cbrResponse.Date, privacy: .public)")
                 } catch {
-                    print("Error decoding CBR data: \(error)")
+                    Self.ratesLogger.error("CBR decode failed: \(String(describing: error), privacy: .public)")
                 }
                 completion()
             }
@@ -395,18 +516,18 @@ class CurrencyCalculatorModel: ObservableObject {
             return
         }
         
-        URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+        rateURLSession.dataTask(with: url) { [weak self] data, response, error in
             guard let self = self else { completion(); return }
             
             DispatchQueue.main.async {
                 guard error == nil, let data = data else {
-                    print("ExchangeRate request error: \(String(describing: error))")
+                    Self.ratesLogger.error("ExchangeRate request failed: \(String(describing: error), privacy: .public)")
                     completion()
                     return
                 }
                 
                 if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-                    print("ExchangeRate HTTP error: \(http.statusCode)")
+                    Self.ratesLogger.error("ExchangeRate HTTP error: \(http.statusCode, privacy: .public)")
                     completion()
                     return
                 }
@@ -415,46 +536,74 @@ class CurrencyCalculatorModel: ObservableObject {
                     let ratesResponse = try JSONDecoder().decode(ExchangeRatesResponse.self, from: data)
                     
                     guard ratesResponse.result == "success" else {
-                        print("ExchangeRate API error: \(ratesResponse.result)")
+                        Self.ratesLogger.error("ExchangeRate API returned result: \(ratesResponse.result, privacy: .public)")
                         completion()
                         return
                     }
                     self.exchangeRates = ratesResponse.rates
-                    self.updateLastUpdated()
-                    print("ExchangeRate rates updated successfully.")
+                    self.exchangeRateLastUpdatedDate = Date(timeIntervalSince1970: TimeInterval(ratesResponse.time_last_update_unix))
+                    Self.ratesLogger.info("ExchangeRate rates updated. USD/RUB: \(ratesResponse.rates["RUB"] ?? 0, privacy: .public), updateUnix: \(ratesResponse.time_last_update_unix, privacy: .public)")
                 } catch {
-                    print("Error decoding ExchangeRate data: \(error)")
+                    Self.ratesLogger.error("ExchangeRate decode failed: \(String(describing: error), privacy: .public)")
                 }
                 completion()
             }
         }.resume()
     }
     
-    // Обновление метки последнего обновления
-    private func updateLastUpdated(date: Date? = nil) {
+    private func parseCBRDate(_ value: String) -> Date? {
+        ISO8601DateFormatter().date(from: value)
+    }
+
+    private func formattedUpdateDate(_ date: Date) -> String {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "dd.MM.yyyy, HH:mm"
-        
-        if let date = date {
-            lastUpdated = dateFormatter.string(from: date)
-        } else {
-            lastUpdated = dateFormatter.string(from: Date())
+        return dateFormatter.string(from: date)
+    }
+
+    private func updateRateStatus(source: RateSource, isFallback: Bool) {
+        isUsingFallbackRate = isFallback
+
+        guard !isFallback else {
+            lastUpdated = AppL10n.text("rates_using_backup")
+            return
+        }
+
+        switch source {
+        case .cbr:
+            lastUpdated = cbrLastUpdatedDate.map(formattedUpdateDate) ?? AppL10n.text("rates_updated")
+        case .exchangeRate:
+            lastUpdated = exchangeRateLastUpdatedDate.map(formattedUpdateDate) ?? AppL10n.text("rates_updated")
+        case .custom:
+            lastUpdated = customRateLastUpdatedDate.map(formattedUpdateDate) ?? AppL10n.text("source_custom")
         }
     }
     
     func updateConversionRate() {
         let source = effectiveRateSource
-        let ratesSource = source == .cbr ? cbrRates : exchangeRates
-        let fallbackSource = source == .cbr ? backupRatesRUB : backupRatesUSD
+        let isFallback: Bool
 
-        let fromRate = ratesSource[fromCurrency.code] ?? fallbackSource[fromCurrency.code] ?? 1.0
-        let toRate = ratesSource[toCurrency.code] ?? fallbackSource[toCurrency.code] ?? 1.0
-
-        if source == .cbr {
+        switch source {
+        case .cbr:
+            let liveFromRate = cbrRates[fromCurrency.code]
+            let liveToRate = cbrRates[toCurrency.code]
+            isFallback = liveFromRate == nil || liveToRate == nil
+            let fromRate = liveFromRate ?? backupRatesRUB[fromCurrency.code] ?? 1.0
+            let toRate = liveToRate ?? backupRatesRUB[toCurrency.code] ?? 1.0
             conversionRate = toRate == 0 ? 0 : fromRate / toRate
-        } else {
+        case .exchangeRate:
+            let liveFromRate = exchangeRates[fromCurrency.code]
+            let liveToRate = exchangeRates[toCurrency.code]
+            isFallback = liveFromRate == nil || liveToRate == nil
+            let fromRate = liveFromRate ?? backupRatesUSD[fromCurrency.code] ?? 1.0
+            let toRate = liveToRate ?? backupRatesUSD[toCurrency.code] ?? 1.0
             conversionRate = fromRate == 0 ? 0 : toRate / fromRate
+        case .custom:
+            isFallback = false
+            conversionRate = customRateForCurrentPair ?? 0
         }
+
+        updateRateStatus(source: source, isFallback: isFallback)
         
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -467,11 +616,85 @@ class CurrencyCalculatorModel: ObservableObject {
         
         convert()
     }
+
+    private func registerSuccessfulActionIfNeeded() {
+        guard displayValue != "0",
+              !displayValue.isEmpty,
+              convertedValue != AppL10n.text("error_generic") else { return }
+
+        let now = Date()
+        if let lastActionDate = defaults.object(forKey: reviewLastActionDateKey) as? Date,
+           now.timeIntervalSince(lastActionDate) < successfulActionThrottle {
+            return
+        }
+
+        defaults.set(now, forKey: reviewLastActionDateKey)
+        let newCount = defaults.integer(forKey: reviewSuccessfulActionsKey) + 1
+        defaults.set(newCount, forKey: reviewSuccessfulActionsKey)
+        evaluateReviewPromptEligibility(now: now, successfulActionsCount: newCount)
+    }
+
+    private func evaluateReviewPromptEligibility(now: Date = Date(), successfulActionsCount: Int? = nil) {
+        guard !showReviewPrompt else { return }
+
+        let installDate = (defaults.object(forKey: installDateKey) as? Date) ?? now
+        guard now.timeIntervalSince(installDate) >= minimumInstallAge else { return }
+
+        let actions = successfulActionsCount ?? defaults.integer(forKey: reviewSuccessfulActionsKey)
+        guard actions >= minimumSuccessfulActionsForPrompt else { return }
+
+        if let deferredAt = defaults.object(forKey: reviewLastDeferredDateKey) as? Date,
+           now.timeIntervalSince(deferredAt) < reviewDeferCooldown {
+            return
+        }
+
+        if let promptedAt = defaults.object(forKey: reviewLastPromptDateKey) as? Date,
+           now.timeIntervalSince(promptedAt) < reviewPromptCooldown {
+            return
+        }
+
+        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+        let lastPromptVersion = defaults.string(forKey: reviewLastPromptVersionKey)
+        guard lastPromptVersion != currentVersion else { return }
+
+        showReviewPrompt = true
+    }
+
+    func deferReviewPrompt() {
+        defaults.set(Date(), forKey: reviewLastDeferredDateKey)
+        showReviewPrompt = false
+    }
+
+    func submitReviewPrompt() {
+        let now = Date()
+        let currentVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0"
+        defaults.set(now, forKey: reviewLastPromptDateKey)
+        defaults.set(currentVersion, forKey: reviewLastPromptVersionKey)
+        defaults.set(0, forKey: reviewSuccessfulActionsKey)
+        showReviewPrompt = false
+        requestReviewIfPossible()
+    }
+
+    private func requestReviewIfPossible() {
+        DispatchQueue.main.async {
+            guard let scene = UIApplication.shared.connectedScenes
+                .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene else {
+                return
+            }
+            SKStoreReviewController.requestReview(in: scene)
+        }
+    }
     
     func swapCurrencies() {
+        let savedSource = activeRateSource
         let temp = fromCurrency
         fromCurrency = toCurrency
         toCurrency = temp
+        // Восстанавливаем источник, если он всё ещё доступен после свопа
+        if availableRateSources.contains(savedSource) {
+            activeRateSource = savedSource
+            persistSelectedCurrencies()
+        }
         updateConversionRate()
     }
     
@@ -594,6 +817,7 @@ class CurrencyCalculatorModel: ObservableObject {
             formatter.maximumFractionDigits = 2
             if let formattedResult = formatter.string(from: NSNumber(value: result)) {
                 convertedValue = formattedResult
+                registerSuccessfulActionIfNeeded()
             } else {
                 convertedValue = AppL10n.text("error_generic")
             }
@@ -607,6 +831,7 @@ class CurrencyCalculatorModel: ObservableObject {
                 formatter.maximumFractionDigits = 2
                 if let formattedResult = formatter.string(from: NSNumber(value: result)) {
                     convertedValue = formattedResult
+                    registerSuccessfulActionIfNeeded()
                 } else {
                     convertedValue = AppL10n.text("error_generic")
                 }
@@ -696,7 +921,7 @@ struct LiquidCalculatorButtonStyle: ButtonStyle {
             }
             .shadow(color: shadowColor(pressed: pressed), radius: pressed ? 0.5 : 1.5, x: 0, y: pressed ? 0.5 : 1)
             .scaleEffect(pressed ? 0.95 : 1)
-            .offset(y: pressed ? 2.6 : 0)
+            .offset(y: pressed ? 4 : 0)
             .animation(.easeOut(duration: 0.12), value: pressed)
     }
 
@@ -756,11 +981,91 @@ struct LiquidIconButtonStyle: ButtonStyle {
     }
 }
 
+struct CustomRateEditorView: View {
+    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var model: CurrencyCalculatorModel
+    @State private var rateText = ""
+    @State private var showsValidationError = false
+
+    private var isPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
+
+    var body: some View {
+        ZStack {
+            Color(red: 0.06, green: 0.09, blue: 0.16)
+                .ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: isPad ? 18 : 14) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(AppL10n.text("custom_rate_title"))
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(.white)
+
+                    Text(String(format: AppL10n.text("custom_rate_pair"), model.fromCurrency.code, model.toCurrency.code))
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.68))
+                }
+
+                TextField("0", text: $rateText)
+                    .keyboardType(.decimalPad)
+                    .font(.system(size: 28, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 13)
+                    .background(Color.white.opacity(0.1), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .strokeBorder(showsValidationError ? Color.red.opacity(0.75) : Color.white.opacity(0.16), lineWidth: 1)
+                    )
+
+                Text(showsValidationError ? AppL10n.text("custom_rate_error") : AppL10n.text("custom_rate_hint"))
+                    .font(.footnote)
+                    .foregroundStyle(showsValidationError ? Color.red.opacity(0.9) : Color.white.opacity(0.62))
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: 10) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text(AppL10n.text("custom_rate_cancel"))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.white.opacity(0.25))
+
+                    Button {
+                        if model.saveCustomRate(rateText) {
+                            dismiss()
+                        } else {
+                            showsValidationError = true
+                        }
+                    } label: {
+                        Text(AppL10n.text("custom_rate_save"))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color(red: 1.0, green: 0.53, blue: 0.2))
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: isPad ? 520 : .infinity)
+        }
+        .onAppear {
+            rateText = model.customRateDraftText()
+            showsValidationError = false
+        }
+        .presentationDetents([.height(isPad ? 330 : 300)])
+        .presentationDragIndicator(.visible)
+    }
+}
+
 struct LiquidCurrencyCard: View {
     var currency: Currency
     var amount: String
     var isPrimary: Bool
     var scale: CGFloat = 1
+    var isIPhoneAir: Bool = false
     private let baseHeightScale: CGFloat = 0.915
 
     private var heightScale: CGFloat {
@@ -769,6 +1074,14 @@ struct LiquidCurrencyCard: View {
 
     private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
+    }
+
+    private var isIPhoneSE: Bool {
+        guard !isPad else { return false }
+        let screenBounds = UIScreen.main.bounds
+        let shortestSide = min(screenBounds.width, screenBounds.height)
+        let longestSide = max(screenBounds.width, screenBounds.height)
+        return shortestSide <= 375 && longestSide <= 667
     }
 
     var body: some View {
@@ -801,12 +1114,12 @@ struct LiquidCurrencyCard: View {
                 Spacer()
 
                 Text(amount)
-                    .font(.system(size: (isPrimary ? 93 : 82) * heightScale * (isPad ? 0.5 : 1.0), weight: .regular, design: .rounded))
+                    .font(.system(size: 93 * heightScale * 0.5 * (isIPhoneSE ? 1.15 : 1.0), weight: .regular, design: .rounded))
                     .foregroundStyle(.white.opacity(0.98))
                     .lineLimit(1)
                     .minimumScaleFactor(0.4)
             }
-            .frame(height: isPad ? (isPrimary ? 93 : 82) * heightScale : nil)
+            .frame(height: 93 * heightScale / (isPad ? 1.0 : 1.5) * (isPad ? 1.0 : 0.751) * (isIPhoneSE ? 0.857 : 1.0) * (isIPhoneAir ? 0.93 : 1.0))
         }
         .padding(15 * heightScale)
         .background(
@@ -823,12 +1136,28 @@ struct LiquidCurrencyCard: View {
 
 struct ContentView: View {
     @StateObject private var model = CurrencyCalculatorModel()
+    @State private var showCustomRateEditor = false
 
     var body: some View {
-        if isPad {
-            iPadBody
-        } else {
-            iPhoneBody
+        Group {
+            if isPad {
+                iPadBody
+            } else {
+                iPhoneBody
+            }
+        }
+        .alert(AppL10n.text("review_prompt_title"), isPresented: $model.showReviewPrompt) {
+            Button(AppL10n.text("review_prompt_later"), role: .cancel) {
+                model.deferReviewPrompt()
+            }
+            Button(AppL10n.text("review_prompt_rate")) {
+                model.submitReviewPrompt()
+            }
+        } message: {
+            Text(AppL10n.text("review_prompt_message"))
+        }
+        .sheet(isPresented: $showCustomRateEditor) {
+            CustomRateEditorView(model: model)
         }
     }
 
@@ -902,7 +1231,8 @@ struct ContentView: View {
                 currency: selection.wrappedValue,
                 amount: amount,
                 isPrimary: isPrimary,
-                scale: scale ?? upperBlockScale
+                scale: scale ?? upperBlockScale,
+                isIPhoneAir: isIPhoneAir
             )
         }
         .buttonStyle(.plain)
@@ -910,7 +1240,9 @@ struct ContentView: View {
 
     private var calculatorSection: some View {
         GeometryReader { geometry in
-            let spacing = max(5.8, min(9.6, geometry.size.width * 0.021))
+            let spacing = isIPhoneSEFormFactor
+                ? max(3.5, min(6.5, geometry.size.width * 0.018))
+                : max(5.8, min(9.6, geometry.size.width * 0.021))
             let useOvalButtons = isIPhoneSEFormFactor
             let availableWidth = geometry.size.width
             let buttonSize = (availableWidth - spacing * 3) / 4
@@ -1041,7 +1373,11 @@ struct ContentView: View {
             Menu {
                 ForEach(model.availableRateSources, id: \.self) { source in
                     Button {
-                        model.setRateSource(source)
+                        if source == .custom {
+                            showCustomRateEditor = true
+                        } else {
+                            model.setRateSource(source)
+                        }
                     } label: {
                         if source == model.activeRateSource {
                             Label(AppL10n.text(source.localizationKey), systemImage: "checkmark")
@@ -1075,7 +1411,7 @@ struct ContentView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text(model.lastUpdated)
                     .font(.caption)
-                    .foregroundStyle(.white.opacity(0.82))
+                    .foregroundStyle(model.isUsingFallbackRate ? Color(red: 1.0, green: 0.74, blue: 0.28) : .white.opacity(0.82))
 
                 Text(model.calculationHistory)
                     .font(.caption)
@@ -1449,7 +1785,7 @@ struct ContentView: View {
     }
 
     private var currencySectionVerticalOffset: CGFloat {
-        if isIPhoneAir { return 9 }
+        if isIPhoneAir { return 2 }
         return 0
     }
 }
