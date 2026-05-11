@@ -10,6 +10,11 @@
 		E046384C2D84E29F00A7A9F6 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E021BD562D847C6D0071F4AB /* WidgetKit.framework */; };
 		E046384D2D84E29F00A7A9F6 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E021BD582D847C6D0071F4AB /* SwiftUI.framework */; };
 		E046385E2D84E2A100A7A9F6 /* CurrencyWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E046384B2D84E29F00A7A9F6 /* CurrencyWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E20000000000000000000001 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E021BD562D847C6D0071F4AB /* WidgetKit.framework */; };
+		E20000000000000000000002 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E021BD582D847C6D0071F4AB /* SwiftUI.framework */; };
+		E20000000000000000000003 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E021BD582D847C6D0071F4AB /* SwiftUI.framework */; };
+		E20000000000000000000004 /* CurrencyWatchWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = E2000000000000000000000A /* CurrencyWatchWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		E20000000000000000000005 /* CoinVerterWatchApp.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = E2000000000000000000000B /* CoinVerterWatchApp.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		E0EAC2B82D83906D00E57A5A /* FlagKit in Frameworks */ = {isa = PBXBuildFile; productRef = E0EAC2B72D83906D00E57A5A /* FlagKit */; };
 /* End PBXBuildFile section */
 
@@ -20,6 +25,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = E046384A2D84E29F00A7A9F6;
 			remoteInfo = CurrencyWidgetExtension;
+		};
+		E20000000000000000000006 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E0FFA1282D8336B30029065F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E20000000000000000000011;
+			remoteInfo = CurrencyWatchWidgetExtension;
+		};
+		E20000000000000000000007 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E0FFA1282D8336B30029065F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E20000000000000000000012;
+			remoteInfo = CoinVerterWatchApp;
 		};
 		E0FFA1412D8336B50029065F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -49,12 +68,36 @@
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E20000000000000000000008 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				E20000000000000000000004 /* CurrencyWatchWidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E20000000000000000000009 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				E20000000000000000000005 /* CoinVerterWatchApp.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		E021BD562D847C6D0071F4AB /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		E021BD582D847C6D0071F4AB /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		E046384B2D84E29F00A7A9F6 /* CurrencyWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CurrencyWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2000000000000000000000A /* CurrencyWatchWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = CurrencyWatchWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2000000000000000000000B /* CoinVerterWatchApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CoinVerterWatchApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0FFA1302D8336B30029065F /* CoinVerter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CoinVerter.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0FFA1402D8336B50029065F /* ConverterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ConverterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0FFA14A2D8336B50029065F /* ConverterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ConverterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -68,6 +111,13 @@
 			);
 			target = E046384A2D84E29F00A7A9F6 /* CurrencyWidgetExtension */;
 		};
+		E2000000000000000000000C /* Exceptions for "CurrencyWatchWidget" folder in "CurrencyWatchWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E20000000000000000000011 /* CurrencyWatchWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -77,6 +127,19 @@
 				E04638612D84E2A100A7A9F6 /* Exceptions for "CurrencyWidget" folder in "CurrencyWidgetExtension" target */,
 			);
 			path = CurrencyWidget;
+			sourceTree = "<group>";
+		};
+		E2000000000000000000000D /* CurrencyWatchWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E2000000000000000000000C /* Exceptions for "CurrencyWatchWidget" folder in "CurrencyWatchWidgetExtension" target */,
+			);
+			path = CurrencyWatchWidget;
+			sourceTree = "<group>";
+		};
+		E2000000000000000000000E /* CoinVerterWatchApp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CoinVerterWatchApp;
 			sourceTree = "<group>";
 		};
 		E0FFA1322D8336B30029065F /* Converter */ = {
@@ -103,6 +166,23 @@
 			files = (
 				E046384D2D84E29F00A7A9F6 /* SwiftUI.framework in Frameworks */,
 				E046384C2D84E29F00A7A9F6 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E2000000000000000000000F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E20000000000000000000002 /* SwiftUI.framework in Frameworks */,
+				E20000000000000000000001 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E20000000000000000000010 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E20000000000000000000003 /* SwiftUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -146,7 +226,9 @@
 				E0FFA1322D8336B30029065F /* Converter */,
 				E0FFA1432D8336B50029065F /* ConverterTests */,
 				E0FFA14D2D8336B50029065F /* ConverterUITests */,
+				E2000000000000000000000E /* CoinVerterWatchApp */,
 				E046384E2D84E29F00A7A9F6 /* CurrencyWidget */,
+				E2000000000000000000000D /* CurrencyWatchWidget */,
 				E021BD552D847C6D0071F4AB /* Frameworks */,
 				E0FFA1312D8336B30029065F /* Products */,
 			);
@@ -159,6 +241,8 @@
 				E0FFA1402D8336B50029065F /* ConverterTests.xctest */,
 				E0FFA14A2D8336B50029065F /* ConverterUITests.xctest */,
 				E046384B2D84E29F00A7A9F6 /* CurrencyWidgetExtension.appex */,
+				E2000000000000000000000A /* CurrencyWatchWidgetExtension.appex */,
+				E2000000000000000000000B /* CoinVerterWatchApp.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -196,11 +280,13 @@
 				E0FFA12D2D8336B30029065F /* Frameworks */,
 				E0FFA12E2D8336B30029065F /* Resources */,
 				E021BD292D83A7B70071F4AB /* Embed Foundation Extensions */,
+				E20000000000000000000009 /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				E046385D2D84E2A100A7A9F6 /* PBXTargetDependency */,
+				E20000000000000000000018 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				E0FFA1322D8336B30029065F /* Converter */,
@@ -211,6 +297,52 @@
 			);
 			productName = CoinVerter;
 			productReference = E0FFA1302D8336B30029065F /* CoinVerter.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E20000000000000000000011 /* CurrencyWatchWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E2000000000000000000001D /* Build configuration list for PBXNativeTarget "CurrencyWatchWidgetExtension" */;
+			buildPhases = (
+				E20000000000000000000015 /* Sources */,
+				E2000000000000000000000F /* Frameworks */,
+				E20000000000000000000013 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				E2000000000000000000000D /* CurrencyWatchWidget */,
+			);
+			name = CurrencyWatchWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = CurrencyWatchWidgetExtension;
+			productReference = E2000000000000000000000A /* CurrencyWatchWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		E20000000000000000000012 /* CoinVerterWatchApp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E2000000000000000000001E /* Build configuration list for PBXNativeTarget "CoinVerterWatchApp" */;
+			buildPhases = (
+				E20000000000000000000016 /* Sources */,
+				E20000000000000000000010 /* Frameworks */,
+				E20000000000000000000014 /* Resources */,
+				E20000000000000000000008 /* Embed App Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E20000000000000000000017 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				E2000000000000000000000E /* CoinVerterWatchApp */,
+			);
+			name = CoinVerterWatchApp;
+			packageProductDependencies = (
+			);
+			productName = CoinVerterWatchApp;
+			productReference = E2000000000000000000000B /* CoinVerterWatchApp.app */;
 			productType = "com.apple.product-type.application";
 		};
 		E0FFA13F2D8336B50029065F /* ConverterTests */ = {
@@ -272,6 +404,12 @@
 					E046384A2D84E29F00A7A9F6 = {
 						CreatedOnToolsVersion = 16.2;
 					};
+					E20000000000000000000011 = {
+						CreatedOnToolsVersion = 16.2;
+					};
+					E20000000000000000000012 = {
+						CreatedOnToolsVersion = 16.2;
+					};
 					E0FFA12F2D8336B30029065F = {
 						CreatedOnToolsVersion = 16.2;
 					};
@@ -289,9 +427,34 @@
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				bg,
+				cs,
+				da,
+				de,
+				el,
 				en,
+				es,
+				et,
+				fi,
+				fr,
+				ga,
+				hr,
+				hu,
+				it,
+				ja,
+				lt,
+				lv,
+				mt,
+				nl,
+				pl,
+				"pt-PT",
+				ro,
 				Base,
 				ru,
+				sk,
+				sl,
+				sv,
+				"zh-Hans",
 			);
 			mainGroup = E0FFA1272D8336B30029065F;
 			minimizedProjectReferenceProxies = 1;
@@ -304,15 +467,31 @@
 			projectRoot = "";
 			targets = (
 				E0FFA12F2D8336B30029065F /* CoinVerter */,
+				E20000000000000000000012 /* CoinVerterWatchApp */,
 				E0FFA13F2D8336B50029065F /* ConverterTests */,
 				E0FFA1492D8336B50029065F /* ConverterUITests */,
 				E046384A2D84E29F00A7A9F6 /* CurrencyWidgetExtension */,
+				E20000000000000000000011 /* CurrencyWatchWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		E04638492D84E29F00A7A9F6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E20000000000000000000013 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E20000000000000000000014 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -350,6 +529,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		E20000000000000000000015 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E20000000000000000000016 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		E0FFA12C2D8336B30029065F /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -379,6 +572,16 @@
 			target = E046384A2D84E29F00A7A9F6 /* CurrencyWidgetExtension */;
 			targetProxy = E046385C2D84E2A100A7A9F6 /* PBXContainerItemProxy */;
 		};
+		E20000000000000000000017 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E20000000000000000000011 /* CurrencyWatchWidgetExtension */;
+			targetProxy = E20000000000000000000006 /* PBXContainerItemProxy */;
+		};
+		E20000000000000000000018 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E20000000000000000000012 /* CoinVerterWatchApp */;
+			targetProxy = E20000000000000000000007 /* PBXContainerItemProxy */;
+		};
 		E0FFA1422D8336B50029065F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = E0FFA12F2D8336B30029065F /* CoinVerter */;
@@ -398,7 +601,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CurrencyWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CurrencyWidget;
@@ -408,7 +611,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nikitakrivonosov.ConverteriOS.CurrencyWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -424,7 +627,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CurrencyWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = CurrencyWidget;
@@ -434,13 +637,127 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nikitakrivonosov.ConverteriOS.CurrencyWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		E20000000000000000000019 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CurrencyWatchWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CurrencyWatchWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nikitakrivonosov.ConverteriOS.watchkitapp.CurrencyWatchWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		E2000000000000000000001A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CurrencyWatchWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = CurrencyWatchWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nikitakrivonosov.ConverteriOS.watchkitapp.CurrencyWatchWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Release;
+		};
+		E2000000000000000000001B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = CoinVerter;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIViewControllerBasedStatusBarAppearance = NO;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.nikitakrivonosov.ConverteriOS;
+				INFOPLIST_KEY_WKStatusBarHidden = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nikitakrivonosov.ConverteriOS.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
+			};
+			name = Debug;
+		};
+		E2000000000000000000001C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 2;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = CoinVerter;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIViewControllerBasedStatusBarAppearance = NO;
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = com.nikitakrivonosov.ConverteriOS;
+				INFOPLIST_KEY_WKStatusBarHidden = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.2;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nikitakrivonosov.ConverteriOS.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "watchos watchsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.0;
 			};
 			name = Release;
 		};
@@ -576,7 +893,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"Converter/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -584,14 +901,14 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-					INFOPLIST_KEY_UIRequiresFullScreen = YES;
-					INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nikitakrivonosov.ConverteriOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -612,7 +929,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"Converter/Preview Content\"";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -620,14 +937,14 @@
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-					INFOPLIST_KEY_UIRequiresFullScreen = YES;
-					INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UIRequiresFullScreen = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.nikitakrivonosov.ConverteriOS;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -717,6 +1034,24 @@
 			buildConfigurations = (
 				E046385F2D84E2A100A7A9F6 /* Debug */,
 				E04638602D84E2A100A7A9F6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E2000000000000000000001D /* Build configuration list for PBXNativeTarget "CurrencyWatchWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E20000000000000000000019 /* Debug */,
+				E2000000000000000000001A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E2000000000000000000001E /* Build configuration list for PBXNativeTarget "CoinVerterWatchApp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E2000000000000000000001B /* Debug */,
+				E2000000000000000000001C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
